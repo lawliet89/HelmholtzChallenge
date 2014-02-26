@@ -1,4 +1,4 @@
-/* 
+/*
  * Utility functions
  *
  * Paul Kelly, Gheorghe-Teodor Bercea, Fabio Luporini - Imperial College London - 2014
@@ -30,7 +30,7 @@ void fprint(double * v, int n, int dim){
 }
 
 char * str_cat(char *path, char *ext){
-  char *res = malloc(200);
+  char *res = (char *) malloc(200);
   strcat(res, path);
   strcat(res, ext);
   return res;
