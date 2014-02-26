@@ -11,3 +11,6 @@
 *.lai
 *.la
 *.a
+
+lhs_out
+rhs_out
