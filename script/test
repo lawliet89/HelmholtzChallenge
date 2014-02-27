@@ -1,0 +1,48 @@
+#!/bin/bash
+# Run this script to generate reference data if necessary and test.
+set -eu
+root="$(dirname $0)/.."
+
+if ! test -e "$root/mesh/lhs_out-reference-small" ||\
+	! test -e "$root/mesh/rhs_out-reference-small"; then
+
+	echo "Reference data is not available. Make sure your Git repo is clean"
+	echo "and continue."
+	read -r -p "Continue? (y/n) " CONFIRM
+	case $CONFIRM in
+        y|Y|YES|yes|Yes)
+            ;;
+        *)
+			echo "Cannot test without reference data."
+            exit 1
+            ;;
+    esac
+
+    if git diff-index --quiet HEAD --; then
+    	# cf http://git-blame.blogspot.co.uk/2013/06/checking-current-branch-programatically.html
+    	if branch=$(git symbolic-ref --short -q HEAD); then
+		 	echo "You are currently on branch $branch"
+		else
+		 	echo "Unable able to work with detached HEAD"
+		 	exit 1
+		fi
+	else
+	    # changes
+	    echo "Git repo is not clean! Perhaps stash changes first."
+	    exit 1;
+	fi
+
+	echo "Building reference data"
+	git checkout original
+	(cd "$root" && make clean && make && ./ACA2-2014 mesh/small)
+	mv $root/lhs_out $root/mesh/lhs_out-reference-small
+	mv $root/rhs_out $root/mesh/rhs_out-reference-small
+
+	git checkout "$branch"
+
+	echo "Reference data built"
+fi
+
+(cd "$root" && make && ./ACA2-2014 mesh/small)
+$root/compare_dat $root/mesh/lhs_out-reference-small $root/lhs_out
+$root/compare_dat $root/mesh/rhs_out-reference-small $root/rhs_out

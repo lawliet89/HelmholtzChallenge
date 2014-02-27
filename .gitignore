@@ -16,3 +16,6 @@ lhs_out
 rhs_out
 ACA2-2014
 compare_dat
+
+mesh/lhs_out-reference-small
+mesh/rhs_out-reference-small
