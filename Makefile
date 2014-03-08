@@ -1,7 +1,7 @@
 CXX = g++
 SRC = helmholtz.cpp gettimemicroseconds.cpp utils.cpp wrappers_kernels.cpp
 FLAGS = -O3 -std=c++11 -g
-LIBS = -lrt -lm
+LIBS = -lrt -lm -ltbb
 
 all: compare_dat helmholtz
 

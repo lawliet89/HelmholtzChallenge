@@ -112,22 +112,27 @@ void wrap_expression_1(int start, int end, double *arg0_0,
   }
 }
 
-// ZERO KERNEL
-void zero_1(double *dat) {
-  for (int n = 0; n < 1; ++n) {
-    dat[n] = (double)0;
-  }
-}
+/*
+  Next two functions can be merged into one with a nested loop
+  And are all independent. Might as well use memset maybe???
+*/
+
+// // ZERO KERNEL
+// void zero_1(double *dat) {
+//   for (int n = 0; n < 1; ++n) {
+//     dat[n] = (double)0;
+//   }
+// }
 void wrap_zero_1(int start, int end, double *arg0_0, int layer) {
   for (int n = start; n < end; n++) {
-    int i = n;
-    { zero_1(arg0_0 + i * 1); }
+    arg0_0[n] = 0.f;
   }
 }
 
 // RHS ASSEMBLY KERNEL
-static void kernel_rhs_1(double A[6], double **vertex_coordinates,
-                         double **w0) {
+static void kernel_rhs_1(double A[6], /*const*/ double **vertex_coordinates,
+                         /*const*/ double **w0) {
+  // Setup - no loops at all
   double J[9];
   J[0] = vertex_coordinates[2][0] - vertex_coordinates[0][0];
   J[1] = vertex_coordinates[4][0] - vertex_coordinates[0][0];
@@ -141,7 +146,7 @@ static void kernel_rhs_1(double A[6], double **vertex_coordinates,
   ;
   double K[9];
   double detJ;
-  do {
+  do { // this is not even a loop
     const double d_00 = J[4] * J[8] - J[5] * J[7];
     const double d_01 = J[5] * J[6] - J[3] * J[8];
     const double d_02 = J[3] * J[7] - J[4] * J[6];
@@ -184,8 +189,14 @@ static void kernel_rhs_1(double A[6], double **vertex_coordinates,
     { 0.0158559392689944, 0.0591751709536137, 0.0591751709536137,
       0.22084474454546,   0.136293755182579,  0.508655219095739 }
   };
+
+  // setup ends.
+
+  // ip iterations SHOULD be independent
   for (int ip = 0; ip < 8; ip++) {
     double F0 = 0.0;
+
+    // accumulative
     for (int r = 0; r < 6; r++) {
       F0 += (w0[r][0] * FE0[ip][r]);
     }
@@ -194,15 +205,19 @@ static void kernel_rhs_1(double A[6], double **vertex_coordinates,
     }
   }
 }
-void wrap_rhs_1(int start, int end, double *arg0_0, int *arg0_0_map0_0,
-                double *arg1_0, int *arg1_0_map0_0, double *arg2_0,
-                int *arg2_0_map0_0, int *_arg0_0_off0_0, int *_arg1_0_off0_0,
-                int *_arg2_0_off0_0, int layer) {
+
+void wrap_rhs_1(int start, int end, double *arg0_0,
+                int /*const*/ *arg0_0_map0_0, double /*const*/ *arg1_0,
+                int /*const*/ *arg1_0_map0_0, double /*const*/ *arg2_0,
+                int /*const*/ *arg2_0_map0_0, int /*const*/ *_arg0_0_off0_0,
+                int /*const*/ *_arg1_0_off0_0, int /*const*/ *_arg2_0_off0_0,
+                int layer) {
   double *arg1_0_vec[18];
   double *arg2_0_vec[6];
   int xtr_arg0_0_map0_0[6];
   for (int n = start; n < end; n++) {
     int i = n;
+    // iteration independent address calculation
     arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
     arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
     arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
@@ -233,8 +248,9 @@ void wrap_rhs_1(int start, int end, double *arg0_0, int *arg0_0_map0_0,
     xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
     xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
     xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
-    for (int j_0 = 0; j_0 < layer - 1; ++j_0) {
-      double buffer_arg0_0[6] = { 0 };
+
+    for (int j_0 = 0; j_0 < layer - 1; ++j_0) { // address are accumulative
+      double buffer_arg0_0[6] = { 0 }; // modified below
       kernel_rhs_1(buffer_arg0_0, arg1_0_vec, arg2_0_vec);
       for (int i_0 = 0; i_0 < 6; ++i_0) {
         *(arg0_0 + (xtr_arg0_0_map0_0[i_0]) * 1) += buffer_arg0_0[i_0 * 1 + 0];
