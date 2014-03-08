@@ -14,6 +14,9 @@
 
 /*
  * EXPRESSION KERNEL
+   Probably parallerise over outermost loop - independent
+  Second loop is also independent
+  Third loop works via accumulator.
  */
 void expression_kernel_1(double A[6] , double** x_ )
 {
@@ -227,38 +230,38 @@ void wrap_expression_2(int start, int end, double *arg0_0, double *arg1_0, int l
 void kernel_rhs(double A[6] , double **vertex_coordinates , double **w0 , double **w1 )
 {
   double J[9];
-  J[0] = vertex_coordinates[2][0] - vertex_coordinates[0][0]; 
-  J[1] = vertex_coordinates[4][0] - vertex_coordinates[0][0]; 
-  J[2] = vertex_coordinates[1][0] - vertex_coordinates[0][0]; 
-  J[3] = vertex_coordinates[8][0] - vertex_coordinates[6][0]; 
+  J[0] = vertex_coordinates[2][0] - vertex_coordinates[0][0];
+  J[1] = vertex_coordinates[4][0] - vertex_coordinates[0][0];
+  J[2] = vertex_coordinates[1][0] - vertex_coordinates[0][0];
+  J[3] = vertex_coordinates[8][0] - vertex_coordinates[6][0];
   J[4] = vertex_coordinates[10][0] - vertex_coordinates[6][0];
-  J[5] = vertex_coordinates[7][0] - vertex_coordinates[6][0]; 
+  J[5] = vertex_coordinates[7][0] - vertex_coordinates[6][0];
   J[6] = vertex_coordinates[14][0] - vertex_coordinates[12][0];
-  J[7] = vertex_coordinates[16][0] - vertex_coordinates[12][0]; 
+  J[7] = vertex_coordinates[16][0] - vertex_coordinates[12][0];
   J[8] = vertex_coordinates[13][0] - vertex_coordinates[12][0];;
 
   double K[9];
   double detJ;
-  do { 
+  do {
     const double d_00 = J[4]*J[8] - J[5]*J[7];
     const double d_01 = J[5]*J[6] - J[3]*J[8];
     const double d_02 = J[3]*J[7] - J[4]*J[6];
     const double d_10 = J[2]*J[7] - J[1]*J[8];
-    const double d_11 = J[0]*J[8] - J[2]*J[6]; 
+    const double d_11 = J[0]*J[8] - J[2]*J[6];
     const double d_12 = J[1]*J[6] - J[0]*J[7];
     const double d_20 = J[1]*J[5] - J[2]*J[4];
-    const double d_21 = J[2]*J[3] - J[0]*J[5]; 
+    const double d_21 = J[2]*J[3] - J[0]*J[5];
     const double d_22 = J[0]*J[4] - J[1]*J[3];
 
-    detJ = J[0]*d_00 + J[3]*d_10 + J[6]*d_20; 
-    K[0] = d_00 / detJ; 
-    K[1] = d_10 / detJ; 
-    K[2] = d_20 / detJ; 
-    K[3] = d_01 / detJ; 
-    K[4] = d_11 / detJ; 
-    K[5] = d_21 / detJ; 
-    K[6] = d_02 / detJ; 
-    K[7] = d_12 / detJ; 
+    detJ = J[0]*d_00 + J[3]*d_10 + J[6]*d_20;
+    K[0] = d_00 / detJ;
+    K[1] = d_10 / detJ;
+    K[2] = d_20 / detJ;
+    K[3] = d_01 / detJ;
+    K[4] = d_11 / detJ;
+    K[5] = d_21 / detJ;
+    K[6] = d_02 / detJ;
+    K[7] = d_12 / detJ;
     K[8] = d_22 / detJ; } while (0);
 
   const double det = fabs(detJ);
@@ -419,7 +422,7 @@ static void addto_vector(double *arg0_0,
                   int map_size_1, int *xtr_arg0_0_map0_0,
                   int map_size_2, int *xtr_arg0_0_map1_0,
                   int position){
-  
+
   for(int i = 0; i < map_size_1; i++){
     for(int j = 0; j < map_size_2; j++){
       if (buffer_arg0_0[i][j] > buffer_arg0_0[j][i]){
