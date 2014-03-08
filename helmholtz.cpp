@@ -1,7 +1,7 @@
 /* Helmholtz Extrusion Challenge Exercise
  *
  * Advanced Computer Architecture
- * 
+ *
  * Paul Kelly, Gheorghe-Teodor Bercea, Fabio Luporini - Imperial College London - 2014
  */
 
@@ -20,8 +20,8 @@
 #define FILE_RHS "rhs_out"
 
 
-int main (int argc, char *argv[]) 
-{ 
+int main (int argc, char *argv[])
+{
   int i, j, k;
   long s1, s2;
 
@@ -30,11 +30,12 @@ int main (int argc, char *argv[])
   if ( argc != 2 ){
     // Print usage
     printf("usage: %s filename \n", argv[0]);
-    printf("The filename must be of the form: /Path/To/Meshes/Folder/meshname_without_extension\n");
+    printf("The filename must be of the form: "
+           "/Path/To/Meshes/Folder/meshname_without_extension\n");
     exit(0);
   }
 
-  /* 
+  /*
    * Read in 2D mesh informations, coordinates of the vertices and the
    * map from trinagles to vertices.
    */
@@ -45,12 +46,12 @@ int main (int argc, char *argv[])
   free(node_path);
   free(cell_path);
 
-  /* 
+  /*
    * 3D coordinate field.
    */
   double * coords_3D = extrude_coords(coords_2D, nodes, LAYERS, LAYER_HEIGHT);
   free(coords_2D);
-  /* 
+  /*
    * 3D map from cells to vertices.
    */
   int * map_3D = extrude_map(map_2D, cells, cell_size, LAYERS);
@@ -63,7 +64,7 @@ int main (int argc, char *argv[])
    * Assembly of the LHS and RHS of a Helmholtz Equation.
    */
 
-  /* 
+  /*
    * Evaluate an expression over the mesh.
    *
    */

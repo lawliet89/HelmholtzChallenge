@@ -19,7 +19,7 @@
   Second loop is also independent
   Third loop works via accumulator.
  */
-void expression_kernel_1(double A[6], double const **x_) {
+void expression_kernel_1(double A[6], double /*const*/ **x_) {
   const double X[6][6] = { { 1.0, 0.0, 2.77555756156e-17, 0.0, 0.0, 0.0 },
                            { 0.0, 1.0, 0.0, 2.77555756156e-17, 0.0, 0.0 },
                            { -2.77555756156e-17, -0, 1.0, 0.0, 0.0, 0.0 },
@@ -41,38 +41,67 @@ void expression_kernel_1(double A[6], double const **x_) {
     }
   }
 }
-void wrap_expression_1(int start, int end, double *arg0_0, int *arg0_0_map0_0,
-                       double *arg1_0, int *arg1_0_map0_0, int *_arg0_0_off0_0,
-                       int *_arg1_0_off0_0, int layer) {
+
+/*
+  There is some crazy pointer arithmetic going in in this function.
+
+  Updating of values in the array arg0_0 should be independent about the
+  outermost loop because it uses equals and not accumulated. But...
+  I am not sure if they ever alias each other. If they don't,
+  can easily vectorise.
+
+  Unmodified:
+    arg0_0_map0_0
+    arg1_0
+    arg1_0_map0_0
+    arg1_0_map0_0
+    _arg1_0_off0_0
+*/
+void wrap_expression_1(int start, int end, double *arg0_0,
+                       int /*const*/ *arg0_0_map0_0, double /*const*/ *arg1_0,
+                       int /*const*/ *arg1_0_map0_0,
+                       int /*const*/ *_arg0_0_off0_0,
+                       int /*const*/ *_arg1_0_off0_0, int layer) {
   double *arg1_0_vec[6];
   int xtr_arg0_0_map0_0[6];
   for (int n = start; n < end; n++) {
     int i = n;
+    // These btis are iteration independent
+    // Address calculation
     arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
     arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
     arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
     arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
     arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
     arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
+
+    // Integer values calculation
     xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
     xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
     xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
     xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
     xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
     xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
+
     for (int j_0 = 0; j_0 < layer - 1; ++j_0) {
-      double buffer_arg0_0[6] = { 0 };
-      expression_kernel_1(buffer_arg0_0,
-                          const_cast<double const **>(arg1_0_vec));
-      for (int i_0 = 0; i_0 < 6; ++i_0) {
+      double buffer_arg0_0[6] = { 0 }; // i.e. iteration independent
+      expression_kernel_1(buffer_arg0_0, /*const*/ arg1_0_vec);
+      for (int i_0 = 0; i_0 < 6; ++i_0) { // iteration independent
         *(arg0_0 + (xtr_arg0_0_map0_0[i_0]) * 1) = buffer_arg0_0[i_0 * 1 + 0];
       }
+      // These values are accumulated over the course of this loop
+      // but for each n, they should be independent
+      // i.e. for each n,
       xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0];
       xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1];
       xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2];
       xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3];
       xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4];
       xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5];
+
+      // These values are accumulated over the course of this loop
+      // but for each n, they should be independent
+      // i.e. for each n,
       arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;
       arg1_0_vec[1] += _arg1_0_off0_0[1] * 3;
       arg1_0_vec[2] += _arg1_0_off0_0[2] * 3;
