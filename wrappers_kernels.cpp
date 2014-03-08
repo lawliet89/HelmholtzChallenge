@@ -63,7 +63,7 @@ void wrap_expression_1(int start, int end, double *arg0_0,
                        int /*const*/ *arg1_0_map0_0,
                        int /*const*/ *_arg0_0_off0_0,
                        int /*const*/ *_arg1_0_off0_0, int layer) {
-  tbb::parallel_for (start, end, [&](int n) {
+  tbb::parallel_for(start, end, [&](int n) {
     double *arg1_0_vec[6];
     int xtr_arg0_0_map0_0[6];
     int i = n;
@@ -215,7 +215,7 @@ void wrap_rhs_1(int start, int end, double *arg0_0,
                 int layer) {
   // probably independent
   // Works but had to increase epsi by factor of ten from original
-  tbb::parallel_for (start, end, [&](int n) {
+  tbb::parallel_for(start, end, [&](int n) {
     double *arg1_0_vec[18];
     double *arg2_0_vec[6];
     int xtr_arg0_0_map0_0[6];
@@ -254,7 +254,7 @@ void wrap_rhs_1(int start, int end, double *arg0_0,
 
     // iterations are dependent
     for (int j_0 = 0; j_0 < layer - 1; ++j_0) { // address are accumulative
-      double buffer_arg0_0[6] = { 0 }; // modified below
+      double buffer_arg0_0[6] = { 0 };          // modified below
       kernel_rhs_1(buffer_arg0_0, arg1_0_vec, arg2_0_vec);
       for (int i_0 = 0; i_0 < 6; ++i_0) {
         *(arg0_0 + (xtr_arg0_0_map0_0[i_0]) * 1) += buffer_arg0_0[i_0 * 1 + 0];
@@ -294,6 +294,7 @@ void wrap_rhs_1(int start, int end, double *arg0_0,
 }
 
 // ANOTHER EXPRESSION COMPUTATION
+// looks like buffer swapping...?
 void expression_2(double *fn_1, double *fn_0) { fn_0[0] = fn_1[0]; }
 void wrap_expression_2(int start, int end, double *arg0_0, double *arg1_0,
                        int layers) {
@@ -307,8 +308,10 @@ void wrap_expression_2(int start, int end, double *arg0_0, double *arg1_0,
 }
 
 // RHS ASSEMBLY
-void kernel_rhs(double A[6], double **vertex_coordinates, double **w0,
-                double **w1) {
+void kernel_rhs(double A[6], double /*const*/ **vertex_coordinates,
+                double /*const*/ **w0, double /*const*/ **w1) {
+
+  // setup linear
   double J[9];
   J[0] = vertex_coordinates[2][0] - vertex_coordinates[0][0];
   J[1] = vertex_coordinates[4][0] - vertex_coordinates[0][0];
@@ -420,6 +423,10 @@ void kernel_rhs(double A[6], double **vertex_coordinates, double **w0,
                               0.788675134594813,  0.211324865405187 },
                             { -0.211324865405187, -0.788675134594813, 0.0, 0.0,
                               0.211324865405187,  0.788675134594813 } };
+
+  // end setup
+
+  // loop is iteration dependent
   for (int ip = 0; ip < 8; ip++) {
     double F0 = 0.0;
     double F1 = 0.0;
@@ -450,17 +457,22 @@ void kernel_rhs(double A[6], double **vertex_coordinates, double **w0,
   }
 }
 
-void wrap_rhs(int start, int end, double *arg0_0, int *arg0_0_map0_0,
-              double *arg1_0, int *arg1_0_map0_0, double *arg2_0,
-              int *arg2_0_map0_0, double *arg3_0, int *arg3_0_map0_0,
-              int *_arg0_0_off0_0, int *_arg1_0_off0_0, int *_arg2_0_off0_0,
-              int *_arg3_0_off0_0, int layer) {
-  double *arg1_0_vec[18];
-  double *arg2_0_vec[6];
-  double *arg3_0_vec[6];
-  int xtr_arg0_0_map0_0[6];
-  for (int n = start; n < end; n++) {
+void wrap_rhs(int start, int end, double *arg0_0, int /*const*/ *arg0_0_map0_0,
+              double /*const*/ *arg1_0, int /*const*/ *arg1_0_map0_0,
+              double /*const*/ *arg2_0, int /*const*/ *arg2_0_map0_0,
+              double /*const*/ *arg3_0, int /*const*/ *arg3_0_map0_0,
+              int /*const*/ *_arg0_0_off0_0, int /*const*/ *_arg1_0_off0_0,
+              int /*const*/ *_arg2_0_off0_0, int /*const*/ *_arg3_0_off0_0,
+              int layer) {
+  tbb::parallel_for(start, end, [&](int n) {
     int i = n;
+
+    double *arg1_0_vec[18];
+    double *arg2_0_vec[6];
+    double *arg3_0_vec[6];
+    int xtr_arg0_0_map0_0[6];
+
+    // iteration independent setup
     arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
     arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
     arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
@@ -499,6 +511,7 @@ void wrap_rhs(int start, int end, double *arg0_0, int *arg0_0_map0_0,
     xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
     for (int j_0 = 0; j_0 < layer - 1; ++j_0) {
       double buffer_arg0_0[6] = { 0 };
+      // following funciton call is j independent
       kernel_rhs(buffer_arg0_0, arg1_0_vec, arg2_0_vec, arg3_0_vec);
       for (int i_0 = 0; i_0 < 6; ++i_0) {
         *(arg0_0 + (xtr_arg0_0_map0_0[i_0]) * 1) += buffer_arg0_0[i_0 * 1 + 0];
@@ -540,7 +553,7 @@ void wrap_rhs(int start, int end, double *arg0_0, int *arg0_0_map0_0,
       arg3_0_vec[4] += _arg3_0_off0_0[4] * 1;
       arg3_0_vec[5] += _arg3_0_off0_0[5] * 1;
     }
-  }
+  });
 }
 
 // MATRIX ASSEMBLY KERNEL
