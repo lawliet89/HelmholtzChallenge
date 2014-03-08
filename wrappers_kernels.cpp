@@ -709,10 +709,11 @@ void wrap_lhs(int start, int end, double *arg0_0, int *arg0_0_map0_0,
               int *arg0_0_map1_0, double *arg1_0, int *arg1_0_map0_0,
               int *_arg0_0_off0_0, int *_arg0_0_off1_0, int *_arg1_0_off0_0,
               int layer) {
-  double *arg1_0_vec[18];
-  int xtr_arg0_0_map0_0[6];
-  int xtr_arg0_0_map1_0[6];
-  for (int n = start; n < end; n++) {
+  tbb::parallel_for(start, end, [&](int n) {
+    double *arg1_0_vec[18];
+    int xtr_arg0_0_map0_0[6];
+    int xtr_arg0_0_map1_0[6];
+
     int i = n;
     arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
     arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
@@ -780,5 +781,5 @@ void wrap_lhs(int start, int end, double *arg0_0, int *arg0_0_map0_0,
       arg1_0_vec[16] += _arg1_0_off0_0[4] * 3;
       arg1_0_vec[17] += _arg1_0_off0_0[5] * 3;
     }
-  }
+  });
 }
