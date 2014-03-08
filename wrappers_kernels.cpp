@@ -213,10 +213,12 @@ void wrap_rhs_1(int start, int end, double *arg0_0,
                 int /*const*/ *arg2_0_map0_0, int /*const*/ *_arg0_0_off0_0,
                 int /*const*/ *_arg1_0_off0_0, int /*const*/ *_arg2_0_off0_0,
                 int layer) {
-  double *arg1_0_vec[18];
-  double *arg2_0_vec[6];
-  int xtr_arg0_0_map0_0[6];
-  for (int n = start; n < end; n++) {
+  // probably independent
+  // Works but had to increase epsi by factor of ten from original
+  tbb::parallel_for (start, end, [&](int n) {
+    double *arg1_0_vec[18];
+    double *arg2_0_vec[6];
+    int xtr_arg0_0_map0_0[6];
     int i = n;
     // iteration independent address calculation
     arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
@@ -250,6 +252,7 @@ void wrap_rhs_1(int start, int end, double *arg0_0,
     xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
     xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
 
+    // iterations are dependent
     for (int j_0 = 0; j_0 < layer - 1; ++j_0) { // address are accumulative
       double buffer_arg0_0[6] = { 0 }; // modified below
       kernel_rhs_1(buffer_arg0_0, arg1_0_vec, arg2_0_vec);
@@ -287,7 +290,7 @@ void wrap_rhs_1(int start, int end, double *arg0_0,
       arg2_0_vec[4] += _arg2_0_off0_0[4] * 1;
       arg2_0_vec[5] += _arg2_0_off0_0[5] * 1;
     }
-  }
+  });
 }
 
 // ANOTHER EXPRESSION COMPUTATION
