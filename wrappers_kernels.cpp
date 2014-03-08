@@ -6,6 +6,7 @@
  */
 
 #include <math.h>
+#include "tbb/parallel_for.h"
 
 #define PI 3.14159265
 
@@ -62,9 +63,9 @@ void wrap_expression_1(int start, int end, double *arg0_0,
                        int /*const*/ *arg1_0_map0_0,
                        int /*const*/ *_arg0_0_off0_0,
                        int /*const*/ *_arg1_0_off0_0, int layer) {
-  double *arg1_0_vec[6];
-  int xtr_arg0_0_map0_0[6];
-  for (int n = start; n < end; n++) {
+  tbb::parallel_for (start, end, [&](int n) {
+    double *arg1_0_vec[6];
+    int xtr_arg0_0_map0_0[6];
     int i = n;
     // These btis are iteration independent
     // Address calculation
@@ -109,7 +110,7 @@ void wrap_expression_1(int start, int end, double *arg0_0,
       arg1_0_vec[4] += _arg1_0_off0_0[4] * 3;
       arg1_0_vec[5] += _arg1_0_off0_0[5] * 3;
     }
-  }
+  });
 }
 
 /*
