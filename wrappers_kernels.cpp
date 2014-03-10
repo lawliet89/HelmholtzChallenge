@@ -63,54 +63,55 @@ void wrap_expression_1(int start, int end, double *arg0_0,
                        int /*const*/ *arg1_0_map0_0,
                        int /*const*/ *_arg0_0_off0_0,
                        int /*const*/ *_arg1_0_off0_0, int layer) {
-  tbb::parallel_for(start, end, [&](int n) {
-    double *arg1_0_vec[6];
-    int xtr_arg0_0_map0_0[6];
-    int i = n;
-    // These btis are iteration independent
-    // Address calculation
-    arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
-    arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
-    arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
-    arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
-    arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
-    arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
+  for (int n =  start; n < end; ++n) {
+    tbb::parallel_for(0 , layer - 1, [=](int j_0){
+      double *arg1_0_vec[6];
+      int xtr_arg0_0_map0_0[6];
+      int i = n;
+      // These btis are iteration independent
+      // Address calculation
+      arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
+      arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
+      arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
+      arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
+      arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
+      arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
 
-    // Integer values calculation
-    xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
-    xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
-    xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
-    xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
-    xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
-    xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
+      // Integer values calculation
+      xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
+      xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
+      xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
+      xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
+      xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
+      xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
 
-    for (int j_0 = 0; j_0 < layer - 1; ++j_0) {
+      // These values are accumulated over the course of this loop
+      // but for each n, they should be independent
+      // i.e. for each n,
+      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0] * j_0;
+      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1] * j_0;
+      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2] * j_0;
+      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3] * j_0;
+      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4] * j_0;
+      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5] * j_0;
+
+      // These values are accumulated over the course of this loop
+      // but for each n, they should be independent
+      // i.e. for each n,
+      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3 * j_0;
+      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3 * j_0;
+      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3 * j_0;
+      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3 * j_0;
+      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3 * j_0;
+      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3 * j_0;
+
       double buffer_arg0_0[6] = { 0 }; // i.e. iteration independent
       expression_kernel_1(buffer_arg0_0, /*const*/ arg1_0_vec);
       for (int i_0 = 0; i_0 < 6; ++i_0) { // iteration independent
         *(arg0_0 + (xtr_arg0_0_map0_0[i_0]) * 1) = buffer_arg0_0[i_0 * 1 + 0];
       }
-      // These values are accumulated over the course of this loop
-      // but for each n, they should be independent
-      // i.e. for each n,
-      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0];
-      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1];
-      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2];
-      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3];
-      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4];
-      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5];
-
-      // These values are accumulated over the course of this loop
-      // but for each n, they should be independent
-      // i.e. for each n,
-      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3;
-    }
-  });
+    });
+  }
 }
 
 /*
@@ -215,82 +216,84 @@ void wrap_rhs_1(int start, int end, double *arg0_0,
                 int layer) {
   // probably independent
   // Works but had to increase epsi by factor of ten from original
-  tbb::parallel_for(start, end, [&](int n) {
-    double *arg1_0_vec[18];
-    double *arg2_0_vec[6];
-    int xtr_arg0_0_map0_0[6];
+  for(int n = start; n < end; ++n){
     int i = n;
-    // iteration independent address calculation
-    arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
-    arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
-    arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
-    arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
-    arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
-    arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
-    arg1_0_vec[6] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 1;
-    arg1_0_vec[7] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 1;
-    arg1_0_vec[8] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 1;
-    arg1_0_vec[9] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 1;
-    arg1_0_vec[10] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 1;
-    arg1_0_vec[11] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 1;
-    arg1_0_vec[12] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 2;
-    arg1_0_vec[13] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 2;
-    arg1_0_vec[14] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 2;
-    arg1_0_vec[15] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 2;
-    arg1_0_vec[16] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 2;
-    arg1_0_vec[17] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 2;
-    arg2_0_vec[0] = arg2_0 + (arg2_0_map0_0[i * 6 + 0]) * 1;
-    arg2_0_vec[1] = arg2_0 + (arg2_0_map0_0[i * 6 + 1]) * 1;
-    arg2_0_vec[2] = arg2_0 + (arg2_0_map0_0[i * 6 + 2]) * 1;
-    arg2_0_vec[3] = arg2_0 + (arg2_0_map0_0[i * 6 + 3]) * 1;
-    arg2_0_vec[4] = arg2_0 + (arg2_0_map0_0[i * 6 + 4]) * 1;
-    arg2_0_vec[5] = arg2_0 + (arg2_0_map0_0[i * 6 + 5]) * 1;
-    xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
-    xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
-    xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
-    xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
-    xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
-    xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
-
     // iterations are dependent
-    for (int j_0 = 0; j_0 < layer - 1; ++j_0) { // address are accumulative
+    tbb::parallel_for(0, layer - 1, [&](int j_0) { // address are accumulative
       double buffer_arg0_0[6] = { 0 };          // modified below
+      double *arg1_0_vec[18];
+      double *arg2_0_vec[6];
+      int xtr_arg0_0_map0_0[6];
+      int i = n;
+      // iteration independent address calculation
+      arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
+      arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
+      arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
+      arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
+      arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
+      arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
+      arg1_0_vec[6] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 1;
+      arg1_0_vec[7] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 1;
+      arg1_0_vec[8] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 1;
+      arg1_0_vec[9] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 1;
+      arg1_0_vec[10] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 1;
+      arg1_0_vec[11] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 1;
+      arg1_0_vec[12] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 2;
+      arg1_0_vec[13] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 2;
+      arg1_0_vec[14] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 2;
+      arg1_0_vec[15] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 2;
+      arg1_0_vec[16] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 2;
+      arg1_0_vec[17] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 2;
+      arg2_0_vec[0] = arg2_0 + (arg2_0_map0_0[i * 6 + 0]) * 1;
+      arg2_0_vec[1] = arg2_0 + (arg2_0_map0_0[i * 6 + 1]) * 1;
+      arg2_0_vec[2] = arg2_0 + (arg2_0_map0_0[i * 6 + 2]) * 1;
+      arg2_0_vec[3] = arg2_0 + (arg2_0_map0_0[i * 6 + 3]) * 1;
+      arg2_0_vec[4] = arg2_0 + (arg2_0_map0_0[i * 6 + 4]) * 1;
+      arg2_0_vec[5] = arg2_0 + (arg2_0_map0_0[i * 6 + 5]) * 1;
+      xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
+      xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
+      xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
+      xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
+      xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
+      xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
+
+      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0] * j_0;
+      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1]* j_0;
+      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2]* j_0;
+      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3]* j_0;
+      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4]* j_0;
+      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5]* j_0;
+      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3* j_0;
+      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3* j_0;
+      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3* j_0;
+      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3* j_0;
+      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3* j_0;
+      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3* j_0;
+      arg1_0_vec[6] += _arg1_0_off0_0[0] * 3* j_0;
+      arg1_0_vec[7] += _arg1_0_off0_0[1] * 3* j_0;
+      arg1_0_vec[8] += _arg1_0_off0_0[2] * 3* j_0;
+      arg1_0_vec[9] += _arg1_0_off0_0[3] * 3* j_0;
+      arg1_0_vec[10] += _arg1_0_off0_0[4] * 3* j_0;
+      arg1_0_vec[11] += _arg1_0_off0_0[5] * 3* j_0;
+      arg1_0_vec[12] += _arg1_0_off0_0[0] * 3* j_0;
+      arg1_0_vec[13] += _arg1_0_off0_0[1] * 3* j_0;
+      arg1_0_vec[14] += _arg1_0_off0_0[2] * 3* j_0;
+      arg1_0_vec[15] += _arg1_0_off0_0[3] * 3* j_0;
+      arg1_0_vec[16] += _arg1_0_off0_0[4] * 3* j_0;
+      arg1_0_vec[17] += _arg1_0_off0_0[5] * 3* j_0;
+      arg2_0_vec[0] += _arg2_0_off0_0[0] * 1* j_0;
+      arg2_0_vec[1] += _arg2_0_off0_0[1] * 1* j_0;
+      arg2_0_vec[2] += _arg2_0_off0_0[2] * 1* j_0;
+      arg2_0_vec[3] += _arg2_0_off0_0[3] * 1* j_0;
+      arg2_0_vec[4] += _arg2_0_off0_0[4] * 1* j_0;
+      arg2_0_vec[5] += _arg2_0_off0_0[5] * 1* j_0;
+
       kernel_rhs_1(buffer_arg0_0, arg1_0_vec, arg2_0_vec);
       for (int i_0 = 0; i_0 < 6; ++i_0) {
         *(arg0_0 + (xtr_arg0_0_map0_0[i_0]) * 1) += buffer_arg0_0[i_0 * 1 + 0];
       }
-      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0];
-      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1];
-      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2];
-      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3];
-      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4];
-      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5];
-      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3;
-      arg1_0_vec[6] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[7] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[8] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[9] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[10] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[11] += _arg1_0_off0_0[5] * 3;
-      arg1_0_vec[12] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[13] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[14] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[15] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[16] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[17] += _arg1_0_off0_0[5] * 3;
-      arg2_0_vec[0] += _arg2_0_off0_0[0] * 1;
-      arg2_0_vec[1] += _arg2_0_off0_0[1] * 1;
-      arg2_0_vec[2] += _arg2_0_off0_0[2] * 1;
-      arg2_0_vec[3] += _arg2_0_off0_0[3] * 1;
-      arg2_0_vec[4] += _arg2_0_off0_0[4] * 1;
-      arg2_0_vec[5] += _arg2_0_off0_0[5] * 1;
-    }
-  });
+    });
+  }
 }
 
 // ANOTHER EXPRESSION COMPUTATION
@@ -464,96 +467,97 @@ void wrap_rhs(int start, int end, double *arg0_0, int /*const*/ *arg0_0_map0_0,
               int /*const*/ *_arg0_0_off0_0, int /*const*/ *_arg1_0_off0_0,
               int /*const*/ *_arg2_0_off0_0, int /*const*/ *_arg3_0_off0_0,
               int layer) {
-  tbb::parallel_for(start, end, [&](int n) {
+  for(int n = start; n < end; ++n){
     int i = n;
-
-    double *arg1_0_vec[18];
-    double *arg2_0_vec[6];
-    double *arg3_0_vec[6];
-    int xtr_arg0_0_map0_0[6];
-
-    // iteration independent setup
-    arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
-    arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
-    arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
-    arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
-    arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
-    arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
-    arg1_0_vec[6] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 1;
-    arg1_0_vec[7] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 1;
-    arg1_0_vec[8] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 1;
-    arg1_0_vec[9] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 1;
-    arg1_0_vec[10] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 1;
-    arg1_0_vec[11] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 1;
-    arg1_0_vec[12] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 2;
-    arg1_0_vec[13] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 2;
-    arg1_0_vec[14] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 2;
-    arg1_0_vec[15] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 2;
-    arg1_0_vec[16] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 2;
-    arg1_0_vec[17] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 2;
-    arg2_0_vec[0] = arg2_0 + (arg2_0_map0_0[i * 6 + 0]) * 1;
-    arg2_0_vec[1] = arg2_0 + (arg2_0_map0_0[i * 6 + 1]) * 1;
-    arg2_0_vec[2] = arg2_0 + (arg2_0_map0_0[i * 6 + 2]) * 1;
-    arg2_0_vec[3] = arg2_0 + (arg2_0_map0_0[i * 6 + 3]) * 1;
-    arg2_0_vec[4] = arg2_0 + (arg2_0_map0_0[i * 6 + 4]) * 1;
-    arg2_0_vec[5] = arg2_0 + (arg2_0_map0_0[i * 6 + 5]) * 1;
-    arg3_0_vec[0] = arg3_0 + (arg3_0_map0_0[i * 6 + 0]) * 1;
-    arg3_0_vec[1] = arg3_0 + (arg3_0_map0_0[i * 6 + 1]) * 1;
-    arg3_0_vec[2] = arg3_0 + (arg3_0_map0_0[i * 6 + 2]) * 1;
-    arg3_0_vec[3] = arg3_0 + (arg3_0_map0_0[i * 6 + 3]) * 1;
-    arg3_0_vec[4] = arg3_0 + (arg3_0_map0_0[i * 6 + 4]) * 1;
-    arg3_0_vec[5] = arg3_0 + (arg3_0_map0_0[i * 6 + 5]) * 1;
-    xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
-    xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
-    xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
-    xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
-    xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
-    xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
-    for (int j_0 = 0; j_0 < layer - 1; ++j_0) {
+    tbb::parallel_for(0, layer - 1, [&](int j_0) {
       double buffer_arg0_0[6] = { 0 };
+      double *arg1_0_vec[18];
+      double *arg2_0_vec[6];
+      double *arg3_0_vec[6];
+      int xtr_arg0_0_map0_0[6];
+
+      // iteration independent setup
+      arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
+      arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
+      arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
+      arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
+      arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
+      arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
+      arg1_0_vec[6] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 1;
+      arg1_0_vec[7] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 1;
+      arg1_0_vec[8] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 1;
+      arg1_0_vec[9] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 1;
+      arg1_0_vec[10] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 1;
+      arg1_0_vec[11] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 1;
+      arg1_0_vec[12] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 2;
+      arg1_0_vec[13] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 2;
+      arg1_0_vec[14] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 2;
+      arg1_0_vec[15] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 2;
+      arg1_0_vec[16] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 2;
+      arg1_0_vec[17] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 2;
+      arg2_0_vec[0] = arg2_0 + (arg2_0_map0_0[i * 6 + 0]) * 1;
+      arg2_0_vec[1] = arg2_0 + (arg2_0_map0_0[i * 6 + 1]) * 1;
+      arg2_0_vec[2] = arg2_0 + (arg2_0_map0_0[i * 6 + 2]) * 1;
+      arg2_0_vec[3] = arg2_0 + (arg2_0_map0_0[i * 6 + 3]) * 1;
+      arg2_0_vec[4] = arg2_0 + (arg2_0_map0_0[i * 6 + 4]) * 1;
+      arg2_0_vec[5] = arg2_0 + (arg2_0_map0_0[i * 6 + 5]) * 1;
+      arg3_0_vec[0] = arg3_0 + (arg3_0_map0_0[i * 6 + 0]) * 1;
+      arg3_0_vec[1] = arg3_0 + (arg3_0_map0_0[i * 6 + 1]) * 1;
+      arg3_0_vec[2] = arg3_0 + (arg3_0_map0_0[i * 6 + 2]) * 1;
+      arg3_0_vec[3] = arg3_0 + (arg3_0_map0_0[i * 6 + 3]) * 1;
+      arg3_0_vec[4] = arg3_0 + (arg3_0_map0_0[i * 6 + 4]) * 1;
+      arg3_0_vec[5] = arg3_0 + (arg3_0_map0_0[i * 6 + 5]) * 1;
+      xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
+      xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
+      xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
+      xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
+      xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
+      xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
+
+      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0] *j_0;
+      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1] *j_0;
+      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2] *j_0;
+      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3] *j_0;
+      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4] *j_0;
+      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5] *j_0;
+      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3 *j_0;
+      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3 *j_0;
+      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3 *j_0;
+      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3 *j_0;
+      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3 *j_0;
+      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3 *j_0;
+      arg1_0_vec[6] += _arg1_0_off0_0[0] * 3 *j_0;
+      arg1_0_vec[7] += _arg1_0_off0_0[1] * 3 *j_0;
+      arg1_0_vec[8] += _arg1_0_off0_0[2] * 3 *j_0;
+      arg1_0_vec[9] += _arg1_0_off0_0[3] * 3 *j_0;
+      arg1_0_vec[10] += _arg1_0_off0_0[4] * 3 *j_0;
+      arg1_0_vec[11] += _arg1_0_off0_0[5] * 3 *j_0;
+      arg1_0_vec[12] += _arg1_0_off0_0[0] * 3 *j_0;
+      arg1_0_vec[13] += _arg1_0_off0_0[1] * 3 *j_0;
+      arg1_0_vec[14] += _arg1_0_off0_0[2] * 3 *j_0;
+      arg1_0_vec[15] += _arg1_0_off0_0[3] * 3 *j_0;
+      arg1_0_vec[16] += _arg1_0_off0_0[4] * 3 *j_0;
+      arg1_0_vec[17] += _arg1_0_off0_0[5] * 3 *j_0;
+      arg2_0_vec[0] += _arg2_0_off0_0[0] * 1 *j_0;
+      arg2_0_vec[1] += _arg2_0_off0_0[1] * 1 *j_0;
+      arg2_0_vec[2] += _arg2_0_off0_0[2] * 1 *j_0;
+      arg2_0_vec[3] += _arg2_0_off0_0[3] * 1 *j_0;
+      arg2_0_vec[4] += _arg2_0_off0_0[4] * 1 *j_0;
+      arg2_0_vec[5] += _arg2_0_off0_0[5] * 1 *j_0;
+      arg3_0_vec[0] += _arg3_0_off0_0[0] * 1 *j_0;
+      arg3_0_vec[1] += _arg3_0_off0_0[1] * 1 *j_0;
+      arg3_0_vec[2] += _arg3_0_off0_0[2] * 1 *j_0;
+      arg3_0_vec[3] += _arg3_0_off0_0[3] * 1 *j_0;
+      arg3_0_vec[4] += _arg3_0_off0_0[4] * 1 *j_0;
+      arg3_0_vec[5] += _arg3_0_off0_0[5] * 1 *j_0;
+
       // following funciton call is j independent
       kernel_rhs(buffer_arg0_0, arg1_0_vec, arg2_0_vec, arg3_0_vec);
       for (int i_0 = 0; i_0 < 6; ++i_0) {
         *(arg0_0 + (xtr_arg0_0_map0_0[i_0]) * 1) += buffer_arg0_0[i_0 * 1 + 0];
       }
-      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0];
-      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1];
-      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2];
-      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3];
-      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4];
-      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5];
-      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3;
-      arg1_0_vec[6] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[7] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[8] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[9] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[10] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[11] += _arg1_0_off0_0[5] * 3;
-      arg1_0_vec[12] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[13] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[14] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[15] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[16] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[17] += _arg1_0_off0_0[5] * 3;
-      arg2_0_vec[0] += _arg2_0_off0_0[0] * 1;
-      arg2_0_vec[1] += _arg2_0_off0_0[1] * 1;
-      arg2_0_vec[2] += _arg2_0_off0_0[2] * 1;
-      arg2_0_vec[3] += _arg2_0_off0_0[3] * 1;
-      arg2_0_vec[4] += _arg2_0_off0_0[4] * 1;
-      arg2_0_vec[5] += _arg2_0_off0_0[5] * 1;
-      arg3_0_vec[0] += _arg3_0_off0_0[0] * 1;
-      arg3_0_vec[1] += _arg3_0_off0_0[1] * 1;
-      arg3_0_vec[2] += _arg3_0_off0_0[2] * 1;
-      arg3_0_vec[3] += _arg3_0_off0_0[3] * 1;
-      arg3_0_vec[4] += _arg3_0_off0_0[4] * 1;
-      arg3_0_vec[5] += _arg3_0_off0_0[5] * 1;
-    }
-  });
+    });
+  }
 }
 
 // MATRIX ASSEMBLY KERNEL
@@ -709,77 +713,79 @@ void wrap_lhs(int start, int end, double *arg0_0, int *arg0_0_map0_0,
               int *arg0_0_map1_0, double *arg1_0, int *arg1_0_map0_0,
               int *_arg0_0_off0_0, int *_arg0_0_off1_0, int *_arg1_0_off0_0,
               int layer) {
-  tbb::parallel_for(start, end, [&](int n) {
-    double *arg1_0_vec[18];
-    int xtr_arg0_0_map0_0[6];
-    int xtr_arg0_0_map1_0[6];
+  for(int n = start; n < end; ++n) {
+    tbb::parallel_for (0, layer - 1, [&] (int j_0) {
+      double *arg1_0_vec[18];
+      int xtr_arg0_0_map0_0[6];
+      int xtr_arg0_0_map1_0[6];
 
-    int i = n;
-    arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
-    arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
-    arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
-    arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
-    arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
-    arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
-    arg1_0_vec[6] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 1;
-    arg1_0_vec[7] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 1;
-    arg1_0_vec[8] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 1;
-    arg1_0_vec[9] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 1;
-    arg1_0_vec[10] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 1;
-    arg1_0_vec[11] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 1;
-    arg1_0_vec[12] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 2;
-    arg1_0_vec[13] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 2;
-    arg1_0_vec[14] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 2;
-    arg1_0_vec[15] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 2;
-    arg1_0_vec[16] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 2;
-    arg1_0_vec[17] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 2;
-    xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
-    xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
-    xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
-    xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
-    xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
-    xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
-    xtr_arg0_0_map1_0[0] = *(arg0_0_map1_0 + i * 6 + 0);
-    xtr_arg0_0_map1_0[1] = *(arg0_0_map1_0 + i * 6 + 1);
-    xtr_arg0_0_map1_0[2] = *(arg0_0_map1_0 + i * 6 + 2);
-    xtr_arg0_0_map1_0[3] = *(arg0_0_map1_0 + i * 6 + 3);
-    xtr_arg0_0_map1_0[4] = *(arg0_0_map1_0 + i * 6 + 4);
-    xtr_arg0_0_map1_0[5] = *(arg0_0_map1_0 + i * 6 + 5);
-    for (int j_0 = 0; j_0 < layer - 1; ++j_0) {
+      int i = n;
+      arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3;
+      arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3;
+      arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3;
+      arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3;
+      arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3;
+      arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3;
+      arg1_0_vec[6] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 1;
+      arg1_0_vec[7] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 1;
+      arg1_0_vec[8] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 1;
+      arg1_0_vec[9] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 1;
+      arg1_0_vec[10] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 1;
+      arg1_0_vec[11] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 1;
+      arg1_0_vec[12] = arg1_0 + (arg1_0_map0_0[i * 6 + 0]) * 3 + 2;
+      arg1_0_vec[13] = arg1_0 + (arg1_0_map0_0[i * 6 + 1]) * 3 + 2;
+      arg1_0_vec[14] = arg1_0 + (arg1_0_map0_0[i * 6 + 2]) * 3 + 2;
+      arg1_0_vec[15] = arg1_0 + (arg1_0_map0_0[i * 6 + 3]) * 3 + 2;
+      arg1_0_vec[16] = arg1_0 + (arg1_0_map0_0[i * 6 + 4]) * 3 + 2;
+      arg1_0_vec[17] = arg1_0 + (arg1_0_map0_0[i * 6 + 5]) * 3 + 2;
+      xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
+      xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
+      xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
+      xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
+      xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
+      xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
+      xtr_arg0_0_map1_0[0] = *(arg0_0_map1_0 + i * 6 + 0);
+      xtr_arg0_0_map1_0[1] = *(arg0_0_map1_0 + i * 6 + 1);
+      xtr_arg0_0_map1_0[2] = *(arg0_0_map1_0 + i * 6 + 2);
+      xtr_arg0_0_map1_0[3] = *(arg0_0_map1_0 + i * 6 + 3);
+      xtr_arg0_0_map1_0[4] = *(arg0_0_map1_0 + i * 6 + 4);
+      xtr_arg0_0_map1_0[5] = *(arg0_0_map1_0 + i * 6 + 5);
+
+      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0] * j_0;
+      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1]* j_0;
+      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2]* j_0;
+      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3]* j_0;
+      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4]* j_0;
+      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5]* j_0;
+      xtr_arg0_0_map1_0[0] += _arg0_0_off1_0[0]* j_0;
+      xtr_arg0_0_map1_0[1] += _arg0_0_off1_0[1]* j_0;
+      xtr_arg0_0_map1_0[2] += _arg0_0_off1_0[2]* j_0;
+      xtr_arg0_0_map1_0[3] += _arg0_0_off1_0[3]* j_0;
+      xtr_arg0_0_map1_0[4] += _arg0_0_off1_0[4]* j_0;
+      xtr_arg0_0_map1_0[5] += _arg0_0_off1_0[5]* j_0;
+      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3* j_0;
+      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3* j_0;
+      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3* j_0;
+      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3* j_0;
+      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3* j_0;
+      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3* j_0;
+      arg1_0_vec[6] += _arg1_0_off0_0[0] * 3* j_0;
+      arg1_0_vec[7] += _arg1_0_off0_0[1] * 3* j_0;
+      arg1_0_vec[8] += _arg1_0_off0_0[2] * 3* j_0;
+      arg1_0_vec[9] += _arg1_0_off0_0[3] * 3* j_0;
+      arg1_0_vec[10] += _arg1_0_off0_0[4] * 3* j_0;
+      arg1_0_vec[11] += _arg1_0_off0_0[5] * 3* j_0;
+      arg1_0_vec[12] += _arg1_0_off0_0[0] * 3* j_0;
+      arg1_0_vec[13] += _arg1_0_off0_0[1] * 3* j_0;
+      arg1_0_vec[14] += _arg1_0_off0_0[2] * 3* j_0;
+      arg1_0_vec[15] += _arg1_0_off0_0[3] * 3* j_0;
+      arg1_0_vec[16] += _arg1_0_off0_0[4] * 3* j_0;
+      arg1_0_vec[17] += _arg1_0_off0_0[5] * 3* j_0;
+
       double buffer_arg0_0[6][6] = { { 0 } };
       kernel_lhs(buffer_arg0_0, arg1_0_vec);
       addto_vector(arg0_0, buffer_arg0_0, 6, xtr_arg0_0_map0_0, 6,
                    xtr_arg0_0_map1_0, 0);
-      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0];
-      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1];
-      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2];
-      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3];
-      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4];
-      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5];
-      xtr_arg0_0_map1_0[0] += _arg0_0_off1_0[0];
-      xtr_arg0_0_map1_0[1] += _arg0_0_off1_0[1];
-      xtr_arg0_0_map1_0[2] += _arg0_0_off1_0[2];
-      xtr_arg0_0_map1_0[3] += _arg0_0_off1_0[3];
-      xtr_arg0_0_map1_0[4] += _arg0_0_off1_0[4];
-      xtr_arg0_0_map1_0[5] += _arg0_0_off1_0[5];
-      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3;
-      arg1_0_vec[6] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[7] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[8] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[9] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[10] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[11] += _arg1_0_off0_0[5] * 3;
-      arg1_0_vec[12] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[13] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[14] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[15] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[16] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[17] += _arg1_0_off0_0[5] * 3;
-    }
-  });
+    });
+  }
 }
