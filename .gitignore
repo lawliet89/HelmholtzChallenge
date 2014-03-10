@@ -23,10 +23,10 @@ compare_dat
 mesh/lhs_out-reference-small
 mesh/rhs_out-reference-small
 
-HelmholtzChallenge/Debug/*
-HelmholtzChallenge/x64/*
-HelmholtzChallenge/*.sdf
-HelmholtzChallenge/*.v11.suo
-HelmholtzChallenge/*.vcxproj.user
-HelmholtzChallenge/*.opensdf
+VSWorkingDir/Debug/*
+VSWorkingDir/x64/*
+*.sdf
+*.v11.suo
+*.vcxproj.user
+*.opensdf
 *.pdb

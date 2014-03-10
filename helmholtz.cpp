@@ -9,8 +9,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 
-#include "gettimemicroseconds.h"
+// #include "gettimemicroseconds.h"
 #include "wrappers_kernels.h"
 #include "utils.h"
 
@@ -19,13 +20,17 @@
 #define FILE_LHS "lhs_out"
 #define FILE_RHS "rhs_out"
 
+//Cuda prototypes (cause I'm too lazy to make a header for now)
+int testcuda();
 
 int main (int argc, char *argv[]) 
 { 
   int i, j, k;
-  long s1, s2;
+  long s1 = 0, s2 = 0;
 
   int nodes, cells, cell_size;
+
+  testcuda();
 
   if ( argc != 2 ){
     // Print usage
@@ -38,12 +43,10 @@ int main (int argc, char *argv[])
    * Read in 2D mesh informations, coordinates of the vertices and the
    * map from trinagles to vertices.
    */
-  char * node_path = str_cat(argv[1], ".node");
-  char * cell_path = str_cat(argv[1], ".ele");
-  double * coords_2D = read_coords_2D(node_path, &nodes);
-  int * map_2D = read_cell_node_map_2D(cell_path, &cells, &cell_size);
-  free(node_path);
-  free(cell_path);
+  std::string node_path = str_cat(argv[1], ".node");
+  std::string cell_path = str_cat(argv[1], ".ele");
+  double * coords_2D = read_coords_2D(node_path.c_str(), &nodes);
+  int * map_2D = read_cell_node_map_2D(cell_path.c_str(), &cells, &cell_size);
 
   /* 
    * 3D coordinate field.
@@ -73,12 +76,12 @@ int main (int argc, char *argv[])
    */
   double *expr1 = (double*)malloc(sizeof(double) * nodes * LAYERS);
   printf(" Evaluating expression... ");
-  s1 = stamp();
+  // s1 = stamp();
   wrap_expression_1(0, cells,
                     expr1, map_3D,
                     coords_3D, map_3D,
                     off_3D, off_3D, LAYERS);
-  s2 = stamp();
+  // s2 = stamp();
   printf("%g s\n", (s2 - s1)/1e9);
   //fprint(expr1, 150, 1);
 
@@ -87,24 +90,24 @@ int main (int argc, char *argv[])
    */
   double *expr2 = (double*)malloc(sizeof(double) * nodes * LAYERS);
   printf(" Set array to zero... ");
-  s1 = stamp();
+  // s1 = stamp();
   wrap_zero_1(0, nodes * LAYERS,
               expr2,
               LAYERS);
-  s2 = stamp();
+  // s2 = stamp();
   printf("%g s\n", (s2 - s1)/1e9);
 
   /*
    * Interpolation operation.
    */
   printf(" Interpolate expression... ");
-  s1 = stamp();
+  // s1 = stamp();
   wrap_rhs_1(0, cells,
              expr2, map_3D,
              coords_3D, map_3D,
              expr1, map_3D,
              off_3D, off_3D, off_3D, LAYERS);
-  s2 = stamp();
+  // s2 = stamp();
   printf("%g s\n", (s2 - s1)/1e9);
 
   /*
@@ -112,12 +115,12 @@ int main (int argc, char *argv[])
    */
   double *expr3 = (double*)malloc(sizeof(double) * nodes * LAYERS);
   printf(" Evaluating expression... ");
-  s1 = stamp();
+  // s1 = stamp();
   wrap_expression_2(0, nodes * LAYERS,
                     expr2,
                     expr3,
                     LAYERS);
-  s2 = stamp();
+  // s2 = stamp();
   printf("%g s\n", (s2 - s1)/1e9);
 
   /*
@@ -125,14 +128,14 @@ int main (int argc, char *argv[])
    */
   double *expr4 = (double*)malloc(sizeof(double) * nodes * LAYERS);
   printf(" Assembling right-hand side... ");
-  s1 = stamp();
+  // s1 = stamp();
   wrap_rhs(0, cells,
            expr4, map_3D,
            coords_3D, map_3D,
            expr2, map_3D,
            expr3, map_3D,
            off_3D, off_3D, off_3D, off_3D, LAYERS);
-  s2 = stamp();
+  // s2 = stamp();
   printf("%g s\n", (s2 - s1)/1e9);
 
 
@@ -141,12 +144,12 @@ int main (int argc, char *argv[])
    */
   double *expr5 = (double*)malloc(sizeof(double) * nodes * LAYERS);
   printf(" Assembling left-hand side... ");
-  s1 = stamp();
+  // s1 = stamp();
   wrap_lhs(0, cells,
            expr5, map_3D, map_3D,
            coords_3D, map_3D,
            off_3D, off_3D, off_3D, LAYERS);
-  s2 = stamp();
+  // s2 = stamp();
   printf("%g s\n", (s2 - s1)/1e9);
 
   /*

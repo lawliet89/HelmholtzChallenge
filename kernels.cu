@@ -102,4 +102,6 @@ int testcuda()
     cout << "TEST Results " << endl;
 
     cout << (bValid ? EXIT_SUCCESS : EXIT_FAILURE);
+
+	return bValid;
 }

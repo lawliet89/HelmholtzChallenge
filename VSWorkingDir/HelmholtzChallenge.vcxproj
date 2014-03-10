@@ -19,16 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="helmholtz.cpp" />
-    <ClCompile Include="utils.cpp" />
-    <ClCompile Include="wrappers_kernels.cpp" />
+    <ClCompile Include="..\helmholtz.cpp" />
+    <ClCompile Include="..\utils.cpp" />
+    <ClCompile Include="..\wrappers_kernels.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="utils.h" />
-    <ClInclude Include="wrappers_kernels.h" />
+    <CudaCompile Include="..\kernels.cu" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="kernels.cu" />
+    <ClInclude Include="..\utils.h" />
+    <ClInclude Include="..\wrappers_kernels.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{01CBD5DF-85ED-47CE-A976-AE0065A8DB77}</ProjectGuid>

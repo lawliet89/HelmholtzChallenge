@@ -3,12 +3,13 @@
  *
  * Paul Kelly, Gheorghe-Teodor Bercea, Fabio Luporini - Imperial College London - 2014
  */
+#include <string>
 
 extern void iprint(int * v, int n, int dim);
 
 extern void fprint(double * v, int n, int dim);
 
-extern char * str_cat(char *path, char *ext);
+extern std::string str_cat(char *path, char *ext);
 
 extern void check_range(double *v, int n, int dim);
 
@@ -20,9 +21,9 @@ extern void output(char * filename, double* v, int n, int dim);
  * Mesh handling functions.
  *
  */
-extern double * read_coords_2D(char * filename, int * nodes);
+extern double * read_coords_2D(const char * filename, int * nodes);
 
-extern int * read_cell_node_map_2D(char * filename, int * cells, int * cell_size);
+extern int * read_cell_node_map_2D(const char * filename, int * cells, int * cell_size);
 
 extern double * extrude_coords(double * coords, int nodes, int layers, double layer_height);
 
