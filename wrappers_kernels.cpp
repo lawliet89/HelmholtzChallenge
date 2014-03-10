@@ -6,8 +6,6 @@
 
 #include <math.h>
 
-#define PI 3.14159265
-
 /*
  * WRAPPERS AND KERNELS
  */
@@ -34,47 +32,47 @@ void expression_kernel_1(double A[6] , double** x_ )
           x[d] += X[k][i] * x_[i][d];
         };
       };
-      A[k] = (1+12*PI*PI)*cos(x[0]*PI*2)*cos(x[1]*PI*2)*cos(x[2]*PI*2);
+      A[k] = (1+12*pi*pi)*cos(x[0]*pi*2)*cos(x[1]*pi*2)*cos(x[2]*pi*2);
     }
   }
 }
 void wrap_expression_1(int start, int end,
-                            double * arg0_0, int *arg0_0_map0_0, double *arg1_0, int *arg1_0_map0_0,
-                            int *_arg0_0_off0_0, int *_arg1_0_off0_0 , int layer) {
-  double *arg1_0_vec[6];
-  int xtr_arg0_0_map0_0[6];
+                            double * out, int *out_map0_0, double *coord, int *coord_map0_0,
+                            int *_out_off0_0, int *_coord_off0_0 , int layer) {
+  double *coord_vec[6];
+  int xtr_out_map0_0[6];
   for ( int n = start; n < end; n++ ) {
     int i = n;
-    arg1_0_vec[0] = arg1_0 + (arg1_0_map0_0[i * 6 + 0])* 3;
-    arg1_0_vec[1] = arg1_0 + (arg1_0_map0_0[i * 6 + 1])* 3;
-    arg1_0_vec[2] = arg1_0 + (arg1_0_map0_0[i * 6 + 2])* 3;
-    arg1_0_vec[3] = arg1_0 + (arg1_0_map0_0[i * 6 + 3])* 3;
-    arg1_0_vec[4] = arg1_0 + (arg1_0_map0_0[i * 6 + 4])* 3;
-    arg1_0_vec[5] = arg1_0 + (arg1_0_map0_0[i * 6 + 5])* 3;
-    xtr_arg0_0_map0_0[0] = *(arg0_0_map0_0 + i * 6 + 0);
-    xtr_arg0_0_map0_0[1] = *(arg0_0_map0_0 + i * 6 + 1);
-    xtr_arg0_0_map0_0[2] = *(arg0_0_map0_0 + i * 6 + 2);
-    xtr_arg0_0_map0_0[3] = *(arg0_0_map0_0 + i * 6 + 3);
-    xtr_arg0_0_map0_0[4] = *(arg0_0_map0_0 + i * 6 + 4);
-    xtr_arg0_0_map0_0[5] = *(arg0_0_map0_0 + i * 6 + 5);
+    coord_vec[0] = coord + (coord_map0_0[i * 6 + 0])* 3;
+    coord_vec[1] = coord + (coord_map0_0[i * 6 + 1])* 3;
+    coord_vec[2] = coord + (coord_map0_0[i * 6 + 2])* 3;
+    coord_vec[3] = coord + (coord_map0_0[i * 6 + 3])* 3;
+    coord_vec[4] = coord + (coord_map0_0[i * 6 + 4])* 3;
+    coord_vec[5] = coord + (coord_map0_0[i * 6 + 5])* 3;
+    xtr_out_map0_0[0] = *(out_map0_0 + i * 6 + 0);
+    xtr_out_map0_0[1] = *(out_map0_0 + i * 6 + 1);
+    xtr_out_map0_0[2] = *(out_map0_0 + i * 6 + 2);
+    xtr_out_map0_0[3] = *(out_map0_0 + i * 6 + 3);
+    xtr_out_map0_0[4] = *(out_map0_0 + i * 6 + 4);
+    xtr_out_map0_0[5] = *(out_map0_0 + i * 6 + 5);
     for (int j_0=0; j_0<layer-1; ++j_0){
-      double buffer_arg0_0[6] = {0};
-      expression_kernel_1(buffer_arg0_0, arg1_0_vec);
+      double buffer_out[6] = {0};
+      expression_kernel_1(buffer_out, coord_vec);
       for (int i_0=0; i_0<6; ++i_0) {
-        *(arg0_0 + (xtr_arg0_0_map0_0[i_0])*1) = buffer_arg0_0[i_0*1 + 0];
+        *(out + (xtr_out_map0_0[i_0])*1) = buffer_out[i_0*1 + 0];
       }
-      xtr_arg0_0_map0_0[0] += _arg0_0_off0_0[0];
-      xtr_arg0_0_map0_0[1] += _arg0_0_off0_0[1];
-      xtr_arg0_0_map0_0[2] += _arg0_0_off0_0[2];
-      xtr_arg0_0_map0_0[3] += _arg0_0_off0_0[3];
-      xtr_arg0_0_map0_0[4] += _arg0_0_off0_0[4];
-      xtr_arg0_0_map0_0[5] += _arg0_0_off0_0[5];
-      arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;
-      arg1_0_vec[1] += _arg1_0_off0_0[1] * 3;
-      arg1_0_vec[2] += _arg1_0_off0_0[2] * 3;
-      arg1_0_vec[3] += _arg1_0_off0_0[3] * 3;
-      arg1_0_vec[4] += _arg1_0_off0_0[4] * 3;
-      arg1_0_vec[5] += _arg1_0_off0_0[5] * 3;
+      xtr_out_map0_0[0] += _out_off0_0[0];
+      xtr_out_map0_0[1] += _out_off0_0[1];
+      xtr_out_map0_0[2] += _out_off0_0[2];
+      xtr_out_map0_0[3] += _out_off0_0[3];
+      xtr_out_map0_0[4] += _out_off0_0[4];
+      xtr_out_map0_0[5] += _out_off0_0[5];
+      coord_vec[0] += _coord_off0_0[0] * 3;
+      coord_vec[1] += _coord_off0_0[1] * 3;
+      coord_vec[2] += _coord_off0_0[2] * 3;
+      coord_vec[3] += _coord_off0_0[3] * 3;
+      coord_vec[4] += _coord_off0_0[4] * 3;
+      coord_vec[5] += _coord_off0_0[5] * 3;
     }
   }
 }

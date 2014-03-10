@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\helmholtz.cpp" />
+    <CudaCompile Include="..\helmholtz.cu" />
     <ClCompile Include="..\utils.cpp" />
     <ClCompile Include="..\wrappers_kernels.cpp" />
   </ItemGroup>

@@ -24,12 +24,14 @@
 
 //Cuda prototypes (cause I'm too lazy to make a header for now)
 int testcuda();
+__global__ void wrap_expression_1_GPU(double* outarr, double* coordarr);
 
 int main (int argc, char *argv[]) 
 { 
 	long s1 = 0, s2 = 0;
 
 	int nodes, cells, cell_size;
+	cudaError e;
 
 	testcuda();
 
@@ -52,6 +54,7 @@ int main (int argc, char *argv[])
 	/* 
 	* 3D coordinate field.
 	* stored in triplets [x1 y1 z1 x2 y2 z2 ... ], stored LAYER major order
+	* TODO: Change to struct of arrays instead (or 3 separate arrays) to improve memory access on GPU
 	*/
 	double * coords_3D = extrude_coords(coords_2D, nodes, LAYERS, LAYER_HEIGHT);
 	free(coords_2D);
@@ -69,8 +72,14 @@ int main (int argc, char *argv[])
 	// Send coords to GPU
 	size_t coord_3D_size = sizeof(double) * nodes * 3 * LAYERS;
 	double* coords_3DGPU;
-	cudaMalloc(&coords_3DGPU, coord_3D_size);
-	cudaFree(coords_3DGPU);
+	e = cudaMalloc(&coords_3DGPU, coord_3D_size);
+	e = cudaMemcpy(coords_3DGPU, coords_3D, coord_3D_size, cudaMemcpyHostToDevice);
+
+	// Send map to GPU
+	size_t map_3D_size = sizeof(int) * cells * cell_size * 2;
+	int* map_3DGPU;
+	e = cudaMalloc(&map_3DGPU, map_3D_size);
+	e = cudaMemcpy(map_3DGPU, map_3D, map_3D_size, cudaMemcpyHostToDevice);
 
 	/*
 	* Helmholtz Assembly
@@ -92,6 +101,23 @@ int main (int argc, char *argv[])
 	// s2 = stamp();
 	printf("%g s\n", (s2 - s1)/1e9);
 	//fprint(expr1, 150, 1);
+
+	double* expr1GPU;
+	e = cudaMalloc(&expr1GPU, sizeof(double) * nodes * LAYERS);
+	wrap_expression_1_GPU<<<cells, LAYERS>>>(expr1GPU, coords_3DGPU);
+	e = cudaGetLastError();
+
+	double *expr1check = (double*)malloc(sizeof(double) * nodes * LAYERS);
+	e = cudaMemcpy(expr1check, expr1GPU, sizeof(double) * nodes * LAYERS, cudaMemcpyDeviceToHost);
+
+	for (int i = 0; i < nodes * LAYERS; ++i)
+	{
+		if (std::abs(expr1[i] - expr1check[i]) > 0.000001)
+		{
+			printf("Expr1 differs\n");
+		}
+	}
+
 
 	/*
 	* Zero an array
@@ -166,6 +192,10 @@ int main (int argc, char *argv[])
 	output(FILE_RHS, expr4, nodes * LAYERS, 1);
 	output(FILE_LHS, expr5, nodes * LAYERS, 1);
 	printf(" Numerical results written to output files.\n");
+
+
+	cudaFree(coords_3DGPU);
+	cudaFree(map_3DGPU);
 
 	free(coords_3D);
 	free(map_3D);
