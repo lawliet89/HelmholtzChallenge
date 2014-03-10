@@ -94,10 +94,10 @@ int main (int argc, char *argv[])
 	double *expr1 = (double*)malloc(sizeof(double) * nodes * LAYERS);
 	printf(" Evaluating expression... ");
 	// s1 = stamp();
-	/*wrap_expression_1(0, cells,
+	wrap_expression_1(0, cells,
 		expr1, map_3D,
 		coords_3D, map_3D,
-		off_3D, off_3D, LAYERS);*/
+		off_3D, off_3D, LAYERS);
 	// s2 = stamp();
 	printf("%g s\n", (s2 - s1)/1e9);
 	//fprint(expr1, 150, 1);
