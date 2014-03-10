@@ -112,7 +112,7 @@ int testcuda()
 //This used to be the shittiest "for each node" loop ever. Used to be for each cell, overcompute the nodes. Now rewritten to be for each node
 __global__ void wrap_expression_1_GPU(double* outarr, double* coordarr) {
 	
-	int i = threadIdx.x;
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 	const double pi = 3.141592653589793;
 	outarr[i] = (1+12*pi*pi)*cos(coordarr[i*3 + 0]*pi*2)*cos(coordarr[i*3 + 1]*pi*2)*cos(coordarr[i*3 + 2]*pi*2);
