@@ -19,3 +19,5 @@ compare_dat
 
 mesh/lhs_out-reference-small
 mesh/rhs_out-reference-small
+
+HelmholtzChallenge/Debug/*
