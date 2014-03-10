@@ -53,7 +53,7 @@ int main (int argc, char *argv[])
   free(coords_2D);
   /* 
    * 3D map from cells to vertices.
-   * Stores triangle pairs as sextets of indicies into coords_3D as [x1A x1B y1A y1B z1A z1B  x2A x2B...]
+   * Stores triangle pairs as sextets of indicies into coords_3D as [x1A x1B y1A y1B z1A z1B  x2A x2B...] = [hexprism1, hexprsm2, etc] (all on base layer)
    * Incrementing ALL indicies by 1 triplet effectively steps a layer forward as coords_3D is layer major.
    * see "arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;" etc in wrappers_kernels
    */

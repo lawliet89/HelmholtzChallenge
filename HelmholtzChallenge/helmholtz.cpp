@@ -20,6 +20,8 @@
 #define FILE_LHS "lhs_out"
 #define FILE_RHS "rhs_out"
 
+//Cuda prototypes (cause I'm too lazy to make a header for now)
+int testcuda();
 
 int main (int argc, char *argv[]) 
 { 
@@ -27,6 +29,8 @@ int main (int argc, char *argv[])
   long s1 = 0, s2 = 0;
 
   int nodes, cells, cell_size;
+
+  testcuda();
 
   if ( argc != 2 ){
     // Print usage

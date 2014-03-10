@@ -27,6 +27,9 @@
     <ClInclude Include="utils.h" />
     <ClInclude Include="wrappers_kernels.h" />
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="kernels.cu" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{01CBD5DF-85ED-47CE-A976-AE0065A8DB77}</ProjectGuid>
     <RootNamespace>HelmholtzChallenge</RootNamespace>
