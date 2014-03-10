@@ -115,9 +115,9 @@ double * extrude_coords(double * coords, int nodes, int layers, double layer_hei
   double * res = (double *)malloc(sizeof(double) * nodes * 3 * layers);
   for(int i = 0; i < nodes; i++){
     for(int j = 0; j < layers; j++){
-      res[3*(i*layers + j)] = coords[2*i];
-      res[3*(i*layers + j) + 1] = coords[2*i + 1];
-      res[3*(i*layers + j) + 2] = layer_height * j;
+      res[3*(i*layers + j)] = coords[2*i]; //x
+      res[3*(i*layers + j) + 1] = coords[2*i + 1]; //y
+      res[3*(i*layers + j) + 2] = layer_height * j; //z
     }
   }
   return res;
@@ -128,8 +128,8 @@ int * extrude_map(int * map, int cells, int cell_size, int layers){
 
   for(int i = 0; i < cells; i++){
     for(int j = 0; j < cell_size; j++){
-      res[2 * (i * cell_size + j)] = layers * map[i * cell_size + j];
-      res[2 * (i * cell_size + j) + 1] = res[2 * (i * cell_size + j)] + 1;
+      res[2 * (i * cell_size + j)] = layers * map[i * cell_size + j]; //base triangle
+      res[2 * (i * cell_size + j) + 1] = res[2 * (i * cell_size + j)] + 1; //triangle up one layer (these pairs will be stepped along z in wrapper)
     }
   }
   return res;

@@ -47,11 +47,15 @@ int main (int argc, char *argv[])
 
   /* 
    * 3D coordinate field.
+   * stored in triplets [x1 y1 z1 x2 y2 z2 ... ], stored LAYER major order
    */
   double * coords_3D = extrude_coords(coords_2D, nodes, LAYERS, LAYER_HEIGHT);
   free(coords_2D);
   /* 
    * 3D map from cells to vertices.
+   * Stores triangle pairs as sextets of indicies into coords_3D as [x1A x1B y1A y1B z1A z1B  x2A x2B...]
+   * Incrementing ALL indicies by 1 triplet effectively steps a layer forward as coords_3D is layer major.
+   * see "arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;" etc in wrappers_kernels
    */
   int * map_3D = extrude_map(map_2D, cells, cell_size, LAYERS);
   int off_3D[6] = {1, 1, 1, 1, 1, 1};
