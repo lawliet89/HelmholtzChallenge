@@ -60,7 +60,7 @@ void check_zero(double *v, int n, int dim){
 }
 
 void output(char * filename, double* v, int n, int dim){
-  FILE *f = fopen(filename, "wr");
+  FILE *f = fopen(filename, "w+");
   fprintf(f, "%d %d\n", n, dim);
   for(int i = 0; i < n; i++){
     fprintf(f,"%13.12f\n",v[i]);
