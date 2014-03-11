@@ -24,7 +24,11 @@
 
 //Cuda prototypes (cause I'm too lazy to make a header for now)
 int testcuda();
-__global__ void wrap_expression_1_GPU(double* outarr, double* coordarr);
+__global__ void wrap_expression_1_GPU(double* __restrict__ outarr, const double* __restrict__ coordarr);
+__global__ void wrap_rhs_1_GPU(double* __restrict__ outarr, 
+					double* __restrict__ coordarr,
+					double* __restrict__ inarr,
+					int* __restrict__ sextet_map, int layers);
 
 int main (int argc, char *argv[]) 
 { 
@@ -63,6 +67,7 @@ int main (int argc, char *argv[])
 	* Stores triangle pairs as sextets of indicies into coords_3D as [x1A x1B y1A y1B z1A z1B  x2A x2B...] = [hexprism1, hexprsm2, etc] (all on base layer)
 	* Incrementing ALL indicies by 1 triplet effectively steps a layer forward as coords_3D is layer major.
 	* see "arg1_0_vec[0] += _arg1_0_off0_0[0] * 3;" etc in wrappers_kernels
+	* TODO: change to SoA instead of sextets
 	*/
 	int * map_3D = extrude_map(map_2D, cells, cell_size, LAYERS);
 	int off_3D[6] = {1, 1, 1, 1, 1, 1};
@@ -72,14 +77,14 @@ int main (int argc, char *argv[])
 	// Send coords to GPU
 	size_t coord_3D_size = sizeof(double) * nodes * 3 * LAYERS;
 	double* coords_3DGPU;
-	e = cudaMalloc(&coords_3DGPU, coord_3D_size);
-	e = cudaMemcpy(coords_3DGPU, coords_3D, coord_3D_size, cudaMemcpyHostToDevice);
+	if(e = cudaMalloc(&coords_3DGPU, coord_3D_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemcpy(coords_3DGPU, coords_3D, coord_3D_size, cudaMemcpyHostToDevice)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	// Send map to GPU
 	size_t map_3D_size = sizeof(int) * cells * cell_size * 2;
 	int* map_3DGPU;
-	e = cudaMalloc(&map_3DGPU, map_3D_size);
-	e = cudaMemcpy(map_3DGPU, map_3D, map_3D_size, cudaMemcpyHostToDevice);
+	if(e = cudaMalloc(&map_3DGPU, map_3D_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemcpy(map_3DGPU, map_3D, map_3D_size, cudaMemcpyHostToDevice)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	/*
 	* Helmholtz Assembly
@@ -87,11 +92,13 @@ int main (int argc, char *argv[])
 	* Assembly of the LHS and RHS of a Helmholtz Equation.
 	*/
 
+	size_t expr_size = sizeof(double) * nodes * LAYERS;
+
 	/* 
 	* Evaluate an expression over the mesh.
 	*
 	*/
-	double *expr1 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+	double *expr1 = (double*)malloc(expr_size);
 	printf(" Evaluating expression... ");
 	// s1 = stamp();
 	wrap_expression_1(0, cells,
@@ -102,27 +109,31 @@ int main (int argc, char *argv[])
 	printf("%g s\n", (s2 - s1)/1e9);
 	//fprint(expr1, 150, 1);
 
+	//CUDA
 	double* expr1GPU;
-	e = cudaMalloc(&expr1GPU, sizeof(double) * nodes * LAYERS);
+	if(e = cudaMalloc(&expr1GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	wrap_expression_1_GPU<<<nodes, LAYERS>>>(expr1GPU, coords_3DGPU);
-	e = cudaGetLastError();
+	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 
-	double *expr1check = (double*)malloc(sizeof(double) * nodes * LAYERS);
-	e = cudaMemcpy(expr1check, expr1GPU, sizeof(double) * nodes * LAYERS, cudaMemcpyDeviceToHost);
+	//Check results
+	double *expr1check = (double*)malloc(expr_size);
+	if(e = cudaMemcpy(expr1check, expr1GPU, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	for (int i = 0; i < nodes * LAYERS; ++i)
 	{
-		if (std::abs(expr1[i] - expr1check[i]) > 0.000001)
+		if (std::abs((expr1[i] / expr1check[i]) - 1) > 0.000001)
 		{
 			printf("Expr1 differs\n");
 		}
 	}
 
+	free(expr1check);
+
 
 	/*
 	* Zero an array
 	*/
-	double *expr2 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+	double *expr2 = (double*)malloc(expr_size);
 	printf(" Set array to zero... ");
 	// s1 = stamp();
 	wrap_zero_1(0, nodes * LAYERS,
@@ -130,6 +141,12 @@ int main (int argc, char *argv[])
 		LAYERS);
 	// s2 = stamp();
 	printf("%g s\n", (s2 - s1)/1e9);
+
+	//CUDA
+	double* expr2GPU;
+	if(e = cudaMalloc(&expr2GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemset(expr2GPU, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
 
 	/*
 	* Interpolation operation.
@@ -143,6 +160,27 @@ int main (int argc, char *argv[])
 		off_3D, off_3D, off_3D, LAYERS);
 	// s2 = stamp();
 	printf("%g s\n", (s2 - s1)/1e9);
+
+	//CUDA
+	wrap_rhs_1_GPU<<<cells, LAYERS>>>(expr2GPU, coords_3DGPU, expr1GPU, map_3DGPU, LAYERS);
+	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	
+	//if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaFree(expr1GPU)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	//Check results
+	double *expr2check = (double*)malloc(expr_size);
+	if(e = cudaMemcpy(expr2check, expr2GPU, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	for (int i = 0; i < nodes * LAYERS; ++i)
+	{
+		if (std::abs((expr2[i] / expr2check[i]) - 1) > 0.000001)
+		{
+			printf("Expr2 differs\n");
+		}
+	}
+
+	free(expr2check);
 
 	/*
 	* Another expression kernel

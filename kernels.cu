@@ -110,10 +110,93 @@ int testcuda()
 
 
 //This used to be the shittiest "for each node" loop ever. Used to be for each cell, overcompute the nodes. Now rewritten to be for each node
-__global__ void wrap_expression_1_GPU(double* outarr, double* coordarr) {
-	
+__global__ void wrap_expression_1_GPU(double* __restrict__ outarr, const double* __restrict__ coordarr) {
+
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 	const double pi = 3.141592653589793;
 	outarr[i] = (1+12*pi*pi)*cos(coordarr[i*3 + 0]*pi*2)*cos(coordarr[i*3 + 1]*pi*2)*cos(coordarr[i*3 + 2]*pi*2);
+}
+
+__device__ double atomicAdd(double* address, double val)
+{
+	unsigned long long int* address_as_ull =
+		(unsigned long long int*)address;
+	unsigned long long int old = *address_as_ull, assumed;
+	do {
+		assumed = old;
+		old = atomicCAS(address_as_ull, assumed,
+			__double_as_longlong(val +
+			__longlong_as_double(assumed)));
+	} while (assumed != old);
+	return __longlong_as_double(old);
+}
+
+__global__ void wrap_rhs_1_GPU(double* __restrict__ outarr, 
+					double* __restrict__ coordarr,
+					double* __restrict__ inarr,
+					int* __restrict__ sextet_map, int layers) {
+
+	int cellID = blockIdx.x * blockDim.x + threadIdx.x;
+	int cellID_2D = cellID/layers;
+	int layerheight = cellID - cellID_2D*layers;
+
+	if (layerheight == layers-1)
+		return;
+
+	int curr_verts[6];
+	for (int i = 0; i < 6; ++i)
+	{
+		curr_verts[i] = sextet_map[cellID_2D * 6 + i] + layerheight;
+	}
+
+	double vertex_coordinates[18];
+	for (int d = 0, int i = 0; d < 3; ++d)
+	{
+		for (int v = 0; v < 6; ++v)
+		{
+			vertex_coordinates[i++] = coordarr[curr_verts[v] * 3 + d];
+		}
+	}
+
+	double in_vec[6];
+	for (int i = 0; i < 6; ++i)
+	{
+		in_vec[i] = inarr[curr_verts[i]];
+	}
+
+	double J[9];
+	J[0] = vertex_coordinates[2] - vertex_coordinates[0]; J[1] = vertex_coordinates[4] - vertex_coordinates[0]; J[2] = vertex_coordinates[1] - vertex_coordinates[0]; J[3] = vertex_coordinates[8] - vertex_coordinates[6]; J[4] = vertex_coordinates[10] - vertex_coordinates[6]; J[5] = vertex_coordinates[7] - vertex_coordinates[6]; J[6] = vertex_coordinates[14] - vertex_coordinates[12]; J[7] = vertex_coordinates[16] - vertex_coordinates[12]; J[8] = vertex_coordinates[13] - vertex_coordinates[12];
+	double K[9];
+	double detJ;
+	{ const double d_00 = J[4]*J[8] - J[5]*J[7]; const double d_01 = J[5]*J[6] - J[3]*J[8]; const double d_02 = J[3]*J[7] - J[4]*J[6]; const double d_10 = J[2]*J[7] - J[1]*J[8]; const double d_11 = J[0]*J[8] - J[2]*J[6]; const double d_12 = J[1]*J[6] - J[0]*J[7]; const double d_20 = J[1]*J[5] - J[2]*J[4]; const double d_21 = J[2]*J[3] - J[0]*J[5]; const double d_22 = J[0]*J[4] - J[1]*J[3]; detJ = J[0]*d_00 + J[3]*d_10 + J[6]*d_20; K[0] = d_00 / detJ; K[1] = d_10 / detJ; K[2] = d_20 / detJ; K[3] = d_01 / detJ; K[4] = d_11 / detJ; K[5] = d_21 / detJ; K[6] = d_02 / detJ; K[7] = d_12 / detJ; K[8] = d_22 / detJ; }
+	const double det = fabs(detJ);
+	const double W8[8] = {0.0795103454359941, 0.0795103454359941, 0.0454896545640056, 0.0454896545640056, 0.0795103454359941, 0.0795103454359941, 0.0454896545640056, 0.0454896545640056};
+	const double FE0[8][6] = {{0.525565416968315, 0.140824829046386, 0.140824829046386, 0.0377338992172301, 0.122284888580111, 0.0327661371415707},
+	{0.140824829046386, 0.525565416968315, 0.0377338992172301, 0.140824829046386, 0.0327661371415707, 0.122284888580111},
+	{0.22084474454546, 0.0591751709536137, 0.0591751709536137, 0.0158559392689944, 0.508655219095739, 0.136293755182579},
+	{0.0591751709536137, 0.22084474454546, 0.0158559392689944, 0.0591751709536137, 0.136293755182579, 0.508655219095739},
+	{0.140824829046386, 0.0377338992172301, 0.525565416968315, 0.140824829046386, 0.122284888580111, 0.0327661371415707},
+	{0.0377338992172301, 0.140824829046386, 0.140824829046386, 0.525565416968315, 0.0327661371415707, 0.122284888580111},
+	{0.0591751709536137, 0.0158559392689944, 0.22084474454546, 0.0591751709536137, 0.508655219095739, 0.136293755182579},
+	{0.0158559392689944, 0.0591751709536137, 0.0591751709536137, 0.22084474454546, 0.136293755182579, 0.508655219095739}};
+
+	double A[6] = {0};
+	for (int ip = 0; ip<8; ip++)
+	{
+		double F0 = 0.0;
+		for (int r = 0; r<6; r++)
+		{
+			F0 += (in_vec[r]*FE0[ip][r]);
+		}
+		for (int j = 0; j<6; j++)
+		{
+			A[j] += (det*W8[ip]*FE0[ip][j]*F0);
+		}
+	}
+
+	for (int i = 0; i < 6; ++i)
+	{
+		atomicAdd(outarr + curr_verts[i], A[i]);
+	}
 }
