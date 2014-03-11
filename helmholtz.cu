@@ -10,8 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <Windows.h>
+#include <iostream>
 
-// #include "gettimemicroseconds.h"
 #include "wrappers_kernels.h"
 #include "utils.h"
 
@@ -22,12 +23,33 @@
 
 #include <cuda_runtime.h>
 
+void startTimer(LARGE_INTEGER *timer) {
+    QueryPerformanceCounter(timer);
+}
+
+double getTimer(LARGE_INTEGER StartingTime, LARGE_INTEGER Frequency) {
+    LARGE_INTEGER EndingTime, ElapsedMicroseconds;
+    QueryPerformanceCounter(&EndingTime);
+    ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
+
+    ElapsedMicroseconds.QuadPart *= 1000000;
+    ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
+
+    return double(ElapsedMicroseconds.QuadPart);
+}
+
 //Cuda prototypes (cause I'm too lazy to make a header for now)
 int testcuda();
 __global__ void wrap_expression_1_GPU(double* outarr, double* coordarr);
 
 int main (int argc, char *argv[]) 
 { 
+    LARGE_INTEGER StartingTime;
+    LARGE_INTEGER Frequency;
+    double elapsed;
+
+    QueryPerformanceFrequency(&Frequency); 
+
 	long s1 = 0, s2 = 0;
 
 	int nodes, cells, cell_size;
@@ -94,12 +116,14 @@ int main (int argc, char *argv[])
 	double *expr1 = (double*)malloc(sizeof(double) * nodes * LAYERS);
 	printf(" Evaluating expression... ");
 	// s1 = stamp();
-	wrap_expression_1(0, cells,
+    startTimer(&StartingTime);
+    wrap_expression_1(0, cells,
 		expr1, map_3D,
 		coords_3D, map_3D,
 		off_3D, off_3D, LAYERS);
 	// s2 = stamp();
-	printf("%g s\n", (s2 - s1)/1e9);
+    elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e9);
 	//fprint(expr1, 150, 1);
 
 	double* expr1GPU;
