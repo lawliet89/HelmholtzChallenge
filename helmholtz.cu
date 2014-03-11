@@ -47,6 +47,10 @@ __global__ void wrap_rhs_1_GPU(double* __restrict__ outarr,
 					double* __restrict__ coordarr,
 					double* __restrict__ inarr,
 					int* __restrict__ sextet_map, int layers);
+__global__ void wrap_rhs_GPU(double* __restrict__ outarr, 
+					double* __restrict__ coordarr,
+					double* __restrict__ inarr,
+					int* __restrict__ sextet_map, int layers);
 
 int main (int argc, char *argv[]) 
 { 
@@ -246,10 +250,31 @@ int main (int argc, char *argv[])
 	/*
 	* RHS assembly loop
 	*/
-#ifdef CHECK_VS_CPU
-	double *expr4 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+	double* expr4GPU;
 	printf(" Assembling right-hand side... ");
 	startTimer(&StartingTime);
+
+	if(e = cudaMalloc(&expr4GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemset(expr4GPU, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	wrap_rhs_GPU<<<cells, LAYERS>>>(expr4GPU, coords_3DGPU, expr2GPU, map_3DGPU, LAYERS);
+	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	
+	//Explicit sync for timing
+	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaFree(expr2GPU)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
+
+#ifdef CHECK_VS_CPU
+	double *expr4 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+	startTimer(&StartingTime);
+	// is this necessary?? In the original code when run on linux the malloc is zero
+	// but not necessary. accumulate to indeterminate initial value?
+	wrap_zero_1(0, nodes * LAYERS,
+		expr4,
+		LAYERS);
 	wrap_rhs(0, cells,
 		expr4, map_3D,
 		coords_3D, map_3D,
@@ -258,6 +283,20 @@ int main (int argc, char *argv[])
 		off_3D, off_3D, off_3D, off_3D, LAYERS);
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
+
+	//Check results
+	double *expr4check = (double*)malloc(expr_size);
+	if(e = cudaMemcpy(expr4check, expr4GPU, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	for (int i = 0; i < nodes * LAYERS; ++i)
+	{
+		if (std::abs((expr4[i] / expr4check[i]) - 1) > 0.000001)
+		{
+			printf("Expr4 differs\n");
+		}
+	}
+
+	free(expr4check);
 #endif // CHECK_VS_CPU
 
 #ifdef CHECK_VS_CPU
