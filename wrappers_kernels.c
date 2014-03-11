@@ -528,7 +528,7 @@ void wrap_lhs(int start, int end,
     for (int j_0=0; j_0<layer-1; ++j_0){
       double A[6][6] = {{0}};
       kernel_lhs(A, vertex_coordinates);
-      addto_vector(outarray, buffer_outarray, 6, in_vec,
+      addto_vector(outarray, A, 6, in_vec,
         6, in_vec, 0);
       in_vec[0] += 1;
       in_vec[1] += 1;

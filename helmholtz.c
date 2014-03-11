@@ -141,6 +141,9 @@ int main (int argc, char *argv[])
    */
   double *expr5 = (double*)malloc(sizeof(double) * nodes * LAYERS);
   printf(" Assembling left-hand side... ");
+  wrap_zero_1(0, nodes * LAYERS,
+            expr5,
+            LAYERS);
   s1 = stamp();
   wrap_lhs(0, cells,
            expr5, map_3D, map_3D,
