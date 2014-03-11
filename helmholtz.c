@@ -122,6 +122,9 @@ int main (int argc, char *argv[])
    */
   double *expr4 = (double*)malloc(sizeof(double) * nodes * LAYERS);
   printf(" Assembling right-hand side... ");
+  wrap_zero_1(0, nodes * LAYERS,
+            expr4,
+            LAYERS);
   s1 = stamp();
   wrap_rhs(0, cells,
            expr4, map_3D,
