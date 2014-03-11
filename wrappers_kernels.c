@@ -491,8 +491,8 @@ void wrap_lhs(int start, int end,
               double *coordarray, int *sextet_map,
               int *_outarray_off0_0, int *_outarray_off1_0, int *_arg1_0_off0_0, int layer) {
   double *vertex_coordinates[18];
-  int xtr_outarray_map0_0[6];
-  int xtr_outarray_map1_0[6];
+  int in_vec[6];
+  // int xtr_outarray_map1_0[6];
   for ( int n = start; n < end; n++ ) {
     int i = n;
     vertex_coordinates[0] = coordarray + (sextet_map[i * 6 + 0])* 3;
@@ -513,35 +513,35 @@ void wrap_lhs(int start, int end,
     vertex_coordinates[15] = coordarray + (sextet_map[i * 6 + 3])* 3 + 2;
     vertex_coordinates[16] = coordarray + (sextet_map[i * 6 + 4])* 3 + 2;
     vertex_coordinates[17] = coordarray + (sextet_map[i * 6 + 5])* 3 + 2;
-    xtr_outarray_map0_0[0] = *(sextet_map + i * 6 + 0);
-    xtr_outarray_map0_0[1] = *(sextet_map + i * 6 + 1);
-    xtr_outarray_map0_0[2] = *(sextet_map + i * 6 + 2);
-    xtr_outarray_map0_0[3] = *(sextet_map + i * 6 + 3);
-    xtr_outarray_map0_0[4] = *(sextet_map + i * 6 + 4);
-    xtr_outarray_map0_0[5] = *(sextet_map + i * 6 + 5);
-    xtr_outarray_map1_0[0] = *(sextet_map + i * 6 + 0);
-    xtr_outarray_map1_0[1] = *(sextet_map + i * 6 + 1);
-    xtr_outarray_map1_0[2] = *(sextet_map + i * 6 + 2);
-    xtr_outarray_map1_0[3] = *(sextet_map + i * 6 + 3);
-    xtr_outarray_map1_0[4] = *(sextet_map + i * 6 + 4);
-    xtr_outarray_map1_0[5] = *(sextet_map + i * 6 + 5);
+    in_vec[0] = *(sextet_map + i * 6 + 0);
+    in_vec[1] = *(sextet_map + i * 6 + 1);
+    in_vec[2] = *(sextet_map + i * 6 + 2);
+    in_vec[3] = *(sextet_map + i * 6 + 3);
+    in_vec[4] = *(sextet_map + i * 6 + 4);
+    in_vec[5] = *(sextet_map + i * 6 + 5);
+    // xtr_outarray_map1_0[0] = *(sextet_map + i * 6 + 0);
+    // xtr_outarray_map1_0[1] = *(sextet_map + i * 6 + 1);
+    // xtr_outarray_map1_0[2] = *(sextet_map + i * 6 + 2);
+    // xtr_outarray_map1_0[3] = *(sextet_map + i * 6 + 3);
+    // xtr_outarray_map1_0[4] = *(sextet_map + i * 6 + 4);
+    // xtr_outarray_map1_0[5] = *(sextet_map + i * 6 + 5);
     for (int j_0=0; j_0<layer-1; ++j_0){
-      double buffer_outarray[6][6] = {{0}};
-      kernel_lhs(buffer_outarray, vertex_coordinates);
-      addto_vector(outarray, buffer_outarray, 6, xtr_outarray_map0_0,
-        6, xtr_outarray_map1_0, 0);
-      xtr_outarray_map0_0[0] += 1;
-      xtr_outarray_map0_0[1] += 1;
-      xtr_outarray_map0_0[2] += 1;
-      xtr_outarray_map0_0[3] += 1;
-      xtr_outarray_map0_0[4] += 1;
-      xtr_outarray_map0_0[5] += 1;
-      xtr_outarray_map1_0[0] += 1;
-      xtr_outarray_map1_0[1] += 1;
-      xtr_outarray_map1_0[2] += 1;
-      xtr_outarray_map1_0[3] += 1;
-      xtr_outarray_map1_0[4] += 1;
-      xtr_outarray_map1_0[5] += 1;
+      double A[6][6] = {{0}};
+      kernel_lhs(A, vertex_coordinates);
+      addto_vector(outarray, buffer_outarray, 6, in_vec,
+        6, in_vec, 0);
+      in_vec[0] += 1;
+      in_vec[1] += 1;
+      in_vec[2] += 1;
+      in_vec[3] += 1;
+      in_vec[4] += 1;
+      in_vec[5] += 1;
+      // xtr_outarray_map1_0[0] += 1;
+      // xtr_outarray_map1_0[1] += 1;
+      // xtr_outarray_map1_0[2] += 1;
+      // xtr_outarray_map1_0[3] += 1;
+      // xtr_outarray_map1_0[4] += 1;
+      // xtr_outarray_map1_0[5] += 1;
       vertex_coordinates[0] += 3;
       vertex_coordinates[1] += 3;
       vertex_coordinates[2] += 3;
