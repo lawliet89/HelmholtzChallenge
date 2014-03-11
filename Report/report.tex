@@ -17,20 +17,20 @@ The general approach taken to speed up the execution of the calculation is to ex
 
 In each of the cell, calculation is written to a buffer in which each element of the buffer corresponds to one vertex in the mesh. Since a vertex can belong to more than one cell, care must be taken to ensure that the values accumulated in each vertex is done so without any race conditions such as an atomic add.
 
-The unstructured nature of the mesh also means that trying to exploit spatial locality might be difficult. It will also be difficult to divide the entire iteration space into independent blocks because the memory locations are not "adjacent" to each other. 
+The unstructured nature of the mesh also means that trying to exploit spatial locality might be difficult. It will also be difficult to divide the entire iteration space into independent blocks because the memory locations are not ``adjacent'' to each other. 
 
 \section{Threading}
 
 The first approach to speeding up the calculation was to use threads to exploit the parallelism inherent in the problem. Using the Threading Building Blocks library\footnote{https://www.threadingbuildingblocks.org/}, the iteration space was made into what is essentially a parallel for loop that the library can schedule to run in parallel using threads depending on the hardware available. 
 
-There are two avenues for parallerise the work being done: over each "column" of cells or over each cell individually.  We hypothesise that while both variants of threading will bring about performance improvements to the computation over the original serialised version, the former parallel version is expected to work better than the latter. This is because the work done per cell might be too small compared to the overheads of thread scheduling and context switching. 
+There are two avenues for parallerise the work being done: over each ``column'' of cells or over each cell individually.  We hypothesise that while both variants of threading will bring about performance improvements to the computation over the original serialised version, the former parallel version is expected to work better than the latter. This is because the work done per cell might be too small compared to the overheads of thread scheduling and context switching. 
 
 The results shown in table \ref{table:threads} confirms our hypothesis. We notice that threading by columns gives the largest amount of speed up over the original version, by approximately a factor of four. For threading by cell, the performance for most operations are improved significantly, though not as much as threading by columns. Finally, interpolating expressions became slower in this version because of the overheads in thread scheduling when each thread does too little work.
 
 \section{CUDA Acceleration}
 \section{Summary Table}
 \subsection{Threading Performance}
-Testing was done on a laptop with Intel Core i7-4700MQ with 4 cores running on Linux 13.10. The programs were compiled with GCC with optimisation set to level 3. The results are summarised in the table below, and the times are consistent across several runs with very minor variations. The times for the steps "Set array to zero" and "Evaluating expression" are not reported because they are trivial cases that has been optimised by the compiler. The timings were generated from the large mesh.
+Testing was done on a laptop with Intel Core i7-4700MQ with 4 cores running on Linux 13.10. The programs were compiled with GCC with optimisation set to level 3. The results are summarised in the table below, and the times are consistent across several runs with very minor variations. The times for the steps ``Set array to zero'' and ``Evaluating expression'' are not reported because they are trivial cases that has been optimised by the compiler. The timings were generated from the large mesh.
 
 \begin{table}[h]
 \begin{tabularx}{1.2\textwidth}{ |X|X|X|X|X| }
