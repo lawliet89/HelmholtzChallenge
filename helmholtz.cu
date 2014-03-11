@@ -228,19 +228,25 @@ int main (int argc, char *argv[])
 	/*
 	* Another expression kernel
 	*/
-	double *expr3 = (double*)malloc(sizeof(double) * nodes * LAYERS);
-	printf(" Evaluating expression... ");
-	startTimer(&StartingTime);
-	wrap_expression_2(0, nodes * LAYERS,
-		expr2,
-		expr3,
-		LAYERS);
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
+
+	// this kernel basically says expr3 = expr2
+#ifdef CHECK_VS_CPU
+	double *expr3 = expr2;
+//	double *expr3 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+//	printf(" Evaluating expression... ");
+//	startTimer(&StartingTime);
+//	wrap_expression_2(0, nodes * LAYERS,
+//		expr2,
+//		expr3,
+//		LAYERS);
+//	elapsed = getTimer(StartingTime, Frequency);
+//	printf("%g s\n", elapsed/1e6);
+#endif // CHECK_VS_CPU
 
 	/*
 	* RHS assembly loop
 	*/
+#ifdef CHECK_VS_CPU
 	double *expr4 = (double*)malloc(sizeof(double) * nodes * LAYERS);
 	printf(" Assembling right-hand side... ");
 	startTimer(&StartingTime);
@@ -252,8 +258,9 @@ int main (int argc, char *argv[])
 		off_3D, off_3D, off_3D, off_3D, LAYERS);
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
+#endif // CHECK_VS_CPU
 
-
+#ifdef CHECK_VS_CPU
 	/*
 	* Matrix assembly loop
 	*/
@@ -266,6 +273,7 @@ int main (int argc, char *argv[])
 		off_3D, off_3D, off_3D, LAYERS);
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
+#endif // CHECK_VS_CPU
 
 	/*
 	* RHS and LHS output
