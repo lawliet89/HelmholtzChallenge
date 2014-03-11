@@ -123,7 +123,10 @@ int main (int argc, char *argv[])
 	*/
 
 	size_t expr_size = sizeof(double) * nodes * LAYERS;
-
+	double *buffer1, *buffer2, *buffer3;
+	if(e = cudaMalloc(&buffer1, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMalloc(&buffer2, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMalloc(&buffer3, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	/* 
 	* Evaluate an expression over the mesh.
 	*
@@ -132,10 +135,7 @@ int main (int argc, char *argv[])
 
 	//CUDA
 	startTimer(&StartingTime);
-
-	double* expr1GPU;
-	if(e = cudaMalloc(&expr1GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
-	wrap_expression_1_GPU<<<nodes, LAYERS>>>(expr1GPU, coords_3DGPU);
+	wrap_expression_1_GPU<<<nodes, LAYERS>>>(buffer1, coords_3DGPU);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	//Explicit sync for timing
@@ -159,7 +159,7 @@ int main (int argc, char *argv[])
 
 	//Check results
 	double *expr1check = (double*)malloc(expr_size);
-	if(e = cudaMemcpy(expr1check, expr1GPU, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemcpy(expr1check, buffer1, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	for (int i = 0; i < nodes * LAYERS; ++i)
 	{
@@ -184,9 +184,7 @@ int main (int argc, char *argv[])
 #endif // CHECK_VS_CPU
 
 	//CUDA
-	double* expr2GPU;
-	if(e = cudaMalloc(&expr2GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
-	if(e = cudaMemset(expr2GPU, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemset(buffer2, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	/*
 	* Interpolation operation.
@@ -196,12 +194,11 @@ int main (int argc, char *argv[])
 	//CUDA
 	startTimer(&StartingTime);
 
-	wrap_rhs_1_GPU<<<cells, LAYERS>>>(expr2GPU, coords_3DGPU, expr1GPU, map_3DGPU, LAYERS);
+	wrap_rhs_1_GPU<<<cells, LAYERS>>>(buffer2, coords_3DGPU, buffer1, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	
 	//Explicit sync for timing
 	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	if(e = cudaFree(expr1GPU)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
@@ -219,7 +216,7 @@ int main (int argc, char *argv[])
 
 	//Check results
 	double *expr2check = (double*)malloc(expr_size);
-	if(e = cudaMemcpy(expr2check, expr2GPU, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemcpy(expr2check, buffer2, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	for (int i = 0; i < nodes * LAYERS; ++i)
 	{
@@ -254,20 +251,17 @@ int main (int argc, char *argv[])
 	/*
 	* RHS assembly loop
 	*/
-	double* expr4GPU;
 	printf(" Assembling right-hand side... ");
 	startTimer(&StartingTime);
 
-	if(e = cudaMalloc(&expr4GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	// ? Not sure!
-	if(e = cudaMemset(expr4GPU, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemset(buffer1, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
-	wrap_rhs_GPU<<<cells, LAYERS>>>(expr4GPU, coords_3DGPU, expr2GPU, map_3DGPU, LAYERS);
+	wrap_rhs_GPU<<<cells, LAYERS>>>(buffer1, coords_3DGPU, buffer2, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	
 	//Explicit sync for timing
 	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	if(e = cudaFree(expr2GPU)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
@@ -291,7 +285,7 @@ int main (int argc, char *argv[])
 
 	//Check results
 	double *expr4check = (double*)malloc(expr_size);
-	if(e = cudaMemcpy(expr4check, expr4GPU, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemcpy(expr4check, buffer1, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	for (int i = 0; i < nodes * LAYERS; ++i)
 	{
@@ -310,14 +304,11 @@ int main (int argc, char *argv[])
 
 	printf(" Assembling left-hand side... ");
 
-	double* expr5GPU;
 	startTimer(&StartingTime);
 
-	if(e = cudaMalloc(&expr5GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
-	// ? Not sure!
-	if(e = cudaMemset(expr5GPU, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemset(buffer3, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
-	wrap_lhs_GPU<<<cells, LAYERS>>>(expr5GPU, coords_3DGPU, map_3DGPU, LAYERS);
+	wrap_lhs_GPU<<<cells, LAYERS>>>(buffer3, coords_3DGPU, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	
 	//Explicit sync for timing
@@ -342,7 +333,7 @@ int main (int argc, char *argv[])
 
 	//Check results
 	double *expr5check = (double*)malloc(expr_size);
-	if(e = cudaMemcpy(expr5check, expr5GPU, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaMemcpy(expr5check, buffer3, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	for (int i = 0; i < nodes * LAYERS; ++i)
 	{
@@ -359,10 +350,10 @@ int main (int argc, char *argv[])
 	* RHS and LHS output
 	*/
 	double *lhs = (double*)malloc(sizeof(double) * nodes * LAYERS);
-	if(e = cudaMemcpy(lhs, expr5GPU, expr_size, cudaMemcpyDeviceToHost)) 
+	if(e = cudaMemcpy(lhs, buffer3, expr_size, cudaMemcpyDeviceToHost)) 
 		printf("Cuda error %d on line %d\n", e, __LINE__);
 	double *rhs = (double*)malloc(sizeof(double) * nodes * LAYERS);
-	if(e = cudaMemcpy(rhs, expr4GPU, expr_size, cudaMemcpyDeviceToHost)) 
+	if(e = cudaMemcpy(rhs, buffer2, expr_size, cudaMemcpyDeviceToHost)) 
 		printf("Cuda error %d on line %d\n", e, __LINE__);
 	output(FILE_RHS, lhs, nodes * LAYERS, 1);
 	output(FILE_LHS, rhs, nodes * LAYERS, 1);
@@ -371,8 +362,9 @@ int main (int argc, char *argv[])
 
 	cudaFree(coords_3DGPU);
 	cudaFree(map_3DGPU);
-	cudaFree(expr4GPU);
-	cudaFree(expr5GPU);
+	cudaFree(buffer1);
+	cudaFree(buffer2);
+	cudaFree(buffer3);
 	free(lhs);
 	free(rhs);
 #ifdef CHECK_VS_CPU
