@@ -1,7 +1,7 @@
 /* Helmholtz Extrusion Challenge Exercise
  *
  * Advanced Computer Architecture
- * 
+ *
  * Paul Kelly, Gheorghe-Teodor Bercea, Fabio Luporini - Imperial College London - 2014
  */
 
@@ -20,8 +20,8 @@
 #define FILE_RHS "rhs_out"
 
 
-int main (int argc, char *argv[]) 
-{ 
+int main (int argc, char *argv[])
+{
   int i, j, k;
   long s1, s2;
 
@@ -34,7 +34,7 @@ int main (int argc, char *argv[])
     exit(0);
   }
 
-  /* 
+  /*
    * Read in 2D mesh informations, coordinates of the vertices and the
    * map from trinagles to vertices.
    */
@@ -45,12 +45,12 @@ int main (int argc, char *argv[])
   free(node_path);
   free(cell_path);
 
-  /* 
+  /*
    * 3D coordinate field.
    */
   double * coords_3D = extrude_coords(coords_2D, nodes, LAYERS, LAYER_HEIGHT);
   free(coords_2D);
-  /* 
+  /*
    * 3D map from cells to vertices.
    */
   int * map_3D = extrude_map(map_2D, cells, cell_size, LAYERS);
@@ -63,7 +63,7 @@ int main (int argc, char *argv[])
    * Assembly of the LHS and RHS of a Helmholtz Equation.
    */
 
-  /* 
+  /*
    * Evaluate an expression over the mesh.
    *
    */
@@ -106,13 +106,14 @@ int main (int argc, char *argv[])
   /*
    * Another expression kernel
    */
-  double *expr3 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+  // double *expr3 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+  double *expr3 = expr2;
   printf(" Evaluating expression... ");
   s1 = stamp();
-  wrap_expression_2(0, nodes * LAYERS,
-                    expr2,
-                    expr3,
-                    LAYERS);
+  // wrap_expression_2(0, nodes * LAYERS,
+  //                   expr2,
+  //                   expr3,
+  //                   LAYERS);
   s2 = stamp();
   printf("%g s\n", (s2 - s1)/1e9);
 
@@ -156,7 +157,7 @@ int main (int argc, char *argv[])
   free(map_3D);
   free(expr1);
   free(expr2);
-  free(expr3);
+  // free(expr3);
   free(expr4);
   free(expr5);
 
