@@ -30,7 +30,7 @@ The results shown in table \ref{table:threads} confirms our hypothesis. We notic
 \section{CUDA Acceleration}
 \section{Summary Table}
 \subsection{Threading Performance}
-Testing was done on a laptop with Intel Core i7-4700MQ with 4 cores. The programs were compiled with GCC with optimisation set to level 3. The results are summarised in the table below, and the times are consistent across several runs with very minor variations. The times for the steps "Set array to zero" and "Evaluating expression" are not reported because they are trivial cases that has been optimised by the compiler. The timings were generated from the large mesh.
+Testing was done on a laptop with Intel Core i7-4700MQ with 4 cores running on Linux 13.10. The programs were compiled with GCC with optimisation set to level 3. The results are summarised in the table below, and the times are consistent across several runs with very minor variations. The times for the steps "Set array to zero" and "Evaluating expression" are not reported because they are trivial cases that has been optimised by the compiler. The timings were generated from the large mesh.
 
 \begin{table}[h]
 \begin{tabularx}{1.2\textwidth}{ |X|X|X|X|X| }
@@ -41,8 +41,9 @@ Testing was done on a laptop with Intel Core i7-4700MQ with 4 cores. The program
 \multicolumn{1}{|l|}{Threading by Column} & 7.77536        & 1.19127           & 5.64956        & 9.59484        \\ \hline
 \end{tabularx}
 
-\caption{Timings for threaded version using the large data mesh.}
+\caption{Timings in seconds for threaded version using the large data mesh.}
 \label{table:threads}
 \end{table}
+\subsection{CUDA Performance}
 
 \end{document}
