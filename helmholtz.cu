@@ -52,6 +52,10 @@ __global__ void wrap_rhs_GPU(double* __restrict__ outarr,
 					double* __restrict__ inarr,
 					int* __restrict__ sextet_map, int layers);
 
+__global__ void wrap_lhs_GPU(double* __restrict__ outarr, 
+					double* __restrict__ coordarr,
+					int* __restrict__ sextet_map, int layers);
+
 int main (int argc, char *argv[]) 
 { 
     LARGE_INTEGER StartingTime;
@@ -255,6 +259,7 @@ int main (int argc, char *argv[])
 	startTimer(&StartingTime);
 
 	if(e = cudaMalloc(&expr4GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	// ? Not sure!
 	if(e = cudaMemset(expr4GPU, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	wrap_rhs_GPU<<<cells, LAYERS>>>(expr4GPU, coords_3DGPU, expr2GPU, map_3DGPU, LAYERS);
@@ -299,12 +304,34 @@ int main (int argc, char *argv[])
 	free(expr4check);
 #endif // CHECK_VS_CPU
 
-#ifdef CHECK_VS_CPU
 	/*
 	* Matrix assembly loop
 	*/
-	double *expr5 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+
 	printf(" Assembling left-hand side... ");
+
+	double* expr5GPU;
+	startTimer(&StartingTime);
+
+	if(e = cudaMalloc(&expr5GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	// ? Not sure!
+	if(e = cudaMemset(expr5GPU, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	wrap_lhs_GPU<<<cells, LAYERS>>>(expr5GPU, coords_3DGPU, map_3DGPU, LAYERS);
+	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	
+	//Explicit sync for timing
+	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
+
+
+#ifdef CHECK_VS_CPU
+	double *expr5 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+	wrap_zero_1(0, nodes * LAYERS,
+		expr5,
+		LAYERS);
 	startTimer(&StartingTime);
 	wrap_lhs(0, cells,
 		expr5, map_3D, map_3D,
@@ -312,26 +339,51 @@ int main (int argc, char *argv[])
 		off_3D, off_3D, off_3D, LAYERS);
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
+
+	//Check results
+	double *expr5check = (double*)malloc(expr_size);
+	if(e = cudaMemcpy(expr5check, expr5GPU, expr_size, cudaMemcpyDeviceToHost)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	for (int i = 0; i < nodes * LAYERS; ++i)
+	{
+		if (std::abs((expr5[i] / expr5check[i]) - 1) > 0.000001)
+		{
+			printf("Expr5 differs\n");
+		}
+	}
+
+	free(expr5check);
 #endif // CHECK_VS_CPU
 
 	/*
 	* RHS and LHS output
 	*/
-	output(FILE_RHS, expr4, nodes * LAYERS, 1);
-	output(FILE_LHS, expr5, nodes * LAYERS, 1);
+	double *lhs = (double*)malloc(sizeof(double) * nodes * LAYERS);
+	if(e = cudaMemcpy(lhs, expr5GPU, expr_size, cudaMemcpyDeviceToHost)) 
+		printf("Cuda error %d on line %d\n", e, __LINE__);
+	double *rhs = (double*)malloc(sizeof(double) * nodes * LAYERS);
+	if(e = cudaMemcpy(rhs, expr4GPU, expr_size, cudaMemcpyDeviceToHost)) 
+		printf("Cuda error %d on line %d\n", e, __LINE__);
+	output(FILE_RHS, lhs, nodes * LAYERS, 1);
+	output(FILE_LHS, rhs, nodes * LAYERS, 1);
 	printf(" Numerical results written to output files.\n");
 
 
 	cudaFree(coords_3DGPU);
 	cudaFree(map_3DGPU);
-
+	cudaFree(expr4GPU);
+	cudaFree(expr5GPU);
+	free(lhs);
+	free(rhs);
+#ifdef CHECK_VS_CPU
 	free(coords_3D);
 	free(map_3D);
 	free(expr1);
 	free(expr2);
-	free(expr3);
+	//free(expr3);
 	free(expr4);
 	free(expr5);
+#endif // CHECK_VS_CPU
 
 	return 0;
 }
