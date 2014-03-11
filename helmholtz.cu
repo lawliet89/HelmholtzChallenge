@@ -286,7 +286,7 @@ int main (int argc, char *argv[])
 	if(e = cudaMemcpy(lhs, buffer3, expr_size, cudaMemcpyDeviceToHost)) 
 		printf("Cuda error %d on line %d\n", e, __LINE__);
 	double *rhs = (double*)malloc(sizeof(double) * nodes * LAYERS);
-	if(e = cudaMemcpy(rhs, buffer2, expr_size, cudaMemcpyDeviceToHost)) 
+	if(e = cudaMemcpy(rhs, buffer1, expr_size, cudaMemcpyDeviceToHost)) 
 		printf("Cuda error %d on line %d\n", e, __LINE__);
 #ifndef TIME_INDIVIDUAL 
 	elapsed = getTimer(StartingTime, Frequency);
