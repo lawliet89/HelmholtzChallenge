@@ -101,7 +101,7 @@ int testcuda()
 	cout << "Memory deallocated successfully" << endl;
 	cout << "TEST Results " << endl;
 
-	cout << (bValid ? EXIT_SUCCESS : EXIT_FAILURE);
+	cout << (bValid ? EXIT_SUCCESS : EXIT_FAILURE) << endl;
 
 	return bValid;
 }
@@ -198,5 +198,7 @@ __global__ void wrap_rhs_1_GPU(double* __restrict__ outarr,
 	for (int i = 0; i < 6; ++i)
 	{
 		atomicAdd(outarr + curr_verts[i], A[i]);
+		//*(outarr + curr_verts[i]) += A[i];
 	}
 }
+

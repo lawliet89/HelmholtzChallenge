@@ -23,6 +23,8 @@
 
 #include <cuda_runtime.h>
 
+#define CHECK_VS_CPU
+
 void startTimer(LARGE_INTEGER *timer) {
     QueryPerformanceCounter(timer);
 }
@@ -52,9 +54,7 @@ int main (int argc, char *argv[])
     LARGE_INTEGER Frequency;
     double elapsed;
 
-    QueryPerformanceFrequency(&Frequency); 
-
-	long s1 = 0, s2 = 0;
+    QueryPerformanceFrequency(&Frequency);
 
 	int nodes, cells, cell_size;
 	cudaError e;
@@ -120,24 +120,34 @@ int main (int argc, char *argv[])
 	* Evaluate an expression over the mesh.
 	*
 	*/
-	double *expr1 = (double*)malloc(expr_size);
 	printf(" Evaluating expression... ");
-	// s1 = stamp();
-    startTimer(&StartingTime);
-    wrap_expression_1(0, cells,
-		expr1, map_3D,
-		coords_3D, map_3D,
-		off_3D, off_3D, LAYERS);
-	// s2 = stamp();
-    elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e9);
-	//fprint(expr1, 150, 1);
 
 	//CUDA
+	startTimer(&StartingTime);
+
 	double* expr1GPU;
 	if(e = cudaMalloc(&expr1GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	wrap_expression_1_GPU<<<nodes, LAYERS>>>(expr1GPU, coords_3DGPU);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	//Explicit sync for timing
+	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
+
+#ifdef CHECK_VS_CPU
+
+	//CPU
+	double *expr1 = (double*)malloc(expr_size);
+	startTimer(&StartingTime);
+    wrap_expression_1(0, cells,
+		expr1, map_3D,
+		coords_3D, map_3D,
+		off_3D, off_3D, LAYERS);
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
+	//fprint(expr1, 150, 1);
 
 	//Check results
 	double *expr1check = (double*)malloc(expr_size);
@@ -153,44 +163,51 @@ int main (int argc, char *argv[])
 
 	free(expr1check);
 
-
 	/*
 	* Zero an array
 	*/
 	double *expr2 = (double*)malloc(expr_size);
 	printf(" Set array to zero... ");
-	// s1 = stamp();
 	wrap_zero_1(0, nodes * LAYERS,
 		expr2,
 		LAYERS);
-	// s2 = stamp();
-	printf("%g s\n", (s2 - s1)/1e9);
+	elapsed = getTimer(StartingTime, Frequency);
+
+#endif // CHECK_VS_CPU
 
 	//CUDA
 	double* expr2GPU;
 	if(e = cudaMalloc(&expr2GPU, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	if(e = cudaMemset(expr2GPU, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
-
 	/*
 	* Interpolation operation.
 	*/
 	printf(" Interpolate expression... ");
-	// s1 = stamp();
+
+	//CUDA
+	startTimer(&StartingTime);
+
+	wrap_rhs_1_GPU<<<cells, LAYERS>>>(expr2GPU, coords_3DGPU, expr1GPU, map_3DGPU, LAYERS);
+	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	
+	//Explicit sync for timing
+	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	if(e = cudaFree(expr1GPU)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
+
+#ifdef CHECK_VS_CPU
+
+	startTimer(&StartingTime);
 	wrap_rhs_1(0, cells,
 		expr2, map_3D,
 		coords_3D, map_3D,
 		expr1, map_3D,
 		off_3D, off_3D, off_3D, LAYERS);
-	// s2 = stamp();
-	printf("%g s\n", (s2 - s1)/1e9);
-
-	//CUDA
-	wrap_rhs_1_GPU<<<cells, LAYERS>>>(expr2GPU, coords_3DGPU, expr1GPU, map_3DGPU, LAYERS);
-	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	
-	//if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	if(e = cudaFree(expr1GPU)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
 
 	//Check results
 	double *expr2check = (double*)malloc(expr_size);
@@ -206,33 +223,35 @@ int main (int argc, char *argv[])
 
 	free(expr2check);
 
+#endif // CHECK_VS_CPU
+
 	/*
 	* Another expression kernel
 	*/
 	double *expr3 = (double*)malloc(sizeof(double) * nodes * LAYERS);
 	printf(" Evaluating expression... ");
-	// s1 = stamp();
+	startTimer(&StartingTime);
 	wrap_expression_2(0, nodes * LAYERS,
 		expr2,
 		expr3,
 		LAYERS);
-	// s2 = stamp();
-	printf("%g s\n", (s2 - s1)/1e9);
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
 
 	/*
 	* RHS assembly loop
 	*/
 	double *expr4 = (double*)malloc(sizeof(double) * nodes * LAYERS);
 	printf(" Assembling right-hand side... ");
-	// s1 = stamp();
+	startTimer(&StartingTime);
 	wrap_rhs(0, cells,
 		expr4, map_3D,
 		coords_3D, map_3D,
 		expr2, map_3D,
 		expr3, map_3D,
 		off_3D, off_3D, off_3D, off_3D, LAYERS);
-	// s2 = stamp();
-	printf("%g s\n", (s2 - s1)/1e9);
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
 
 
 	/*
@@ -240,13 +259,13 @@ int main (int argc, char *argv[])
 	*/
 	double *expr5 = (double*)malloc(sizeof(double) * nodes * LAYERS);
 	printf(" Assembling left-hand side... ");
-	// s1 = stamp();
+	startTimer(&StartingTime);
 	wrap_lhs(0, cells,
 		expr5, map_3D, map_3D,
 		coords_3D, map_3D,
 		off_3D, off_3D, off_3D, LAYERS);
-	// s2 = stamp();
-	printf("%g s\n", (s2 - s1)/1e9);
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
 
 	/*
 	* RHS and LHS output
