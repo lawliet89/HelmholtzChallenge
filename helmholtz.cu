@@ -23,7 +23,7 @@
 
 #include <cuda_runtime.h>
 
-#define CHECK_VS_CPU
+//#define CHECK_VS_CPU
 //#define TIME_INDIVIDUAL
 
 void startTimer(LARGE_INTEGER *timer) {
@@ -117,59 +117,59 @@ int main (int argc, char *argv[])
 #ifndef TIME_INDIVIDUAL 
 	startTimer(&StartingTime); 
 #endif
-	double *expr1 = (double*)malloc(expr_size);
-#ifdef TIME_INDIVIDUAL
-	printf(" Evaluating expression... ");
-	startTimer(&StartingTime);
-#endif
-    wrap_expression_1(0, cells,
-		expr1, map_3D,
-		coords_3D, map_3D,
-		off_3D, off_3D, LAYERS);
-#ifdef TIME_INDIVIDUAL
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
-#endif
-
-	double *expr2 = (double*)malloc(expr_size);
-	wrap_zero_1(0, nodes * LAYERS,
-		expr2,
-		LAYERS);
-	
-#ifdef TIME_INDIVIDUAL 
-	printf(" Interpolate expression... ");
-	startTimer(&StartingTime); 
-#endif
-	wrap_rhs_1(0, cells,
-		expr2, map_3D,
-		coords_3D, map_3D,
-		expr1, map_3D,
-		off_3D, off_3D, off_3D, LAYERS);
-#ifdef TIME_INDIVIDUAL
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
-#endif
-	double *expr3 = expr2;
-	double *expr4 = (double*)malloc(sizeof(double) * nodes * LAYERS);
-
-#ifdef TIME_INDIVIDUAL 
-	printf(" Assembling right-hand side... ");
-	startTimer(&StartingTime); 
-#endif
-	wrap_zero_1(0, nodes * LAYERS,
-		expr4,
-		LAYERS);
-	wrap_rhs(0, cells,
-		expr4, map_3D,
-		coords_3D, map_3D,
-		expr2, map_3D,
-		expr3, map_3D,
-		off_3D, off_3D, off_3D, off_3D, LAYERS);
-
-#ifdef TIME_INDIVIDUAL
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
-#endif
+//	double *expr1 = (double*)malloc(expr_size);
+//#ifdef TIME_INDIVIDUAL
+//	printf(" Evaluating expression... ");
+//	startTimer(&StartingTime);
+//#endif
+//    wrap_expression_1(0, cells,
+//		expr1, map_3D,
+//		coords_3D, map_3D,
+//		off_3D, off_3D, LAYERS);
+//#ifdef TIME_INDIVIDUAL
+//	elapsed = getTimer(StartingTime, Frequency);
+//	printf("%g s\n", elapsed/1e6);
+//#endif
+//
+//	double *expr2 = (double*)malloc(expr_size);
+//	wrap_zero_1(0, nodes * LAYERS,
+//		expr2,
+//		LAYERS);
+//	
+//#ifdef TIME_INDIVIDUAL 
+//	printf(" Interpolate expression... ");
+//	startTimer(&StartingTime); 
+//#endif
+//	wrap_rhs_1(0, cells,
+//		expr2, map_3D,
+//		coords_3D, map_3D,
+//		expr1, map_3D,
+//		off_3D, off_3D, off_3D, LAYERS);
+//#ifdef TIME_INDIVIDUAL
+//	elapsed = getTimer(StartingTime, Frequency);
+//	printf("%g s\n", elapsed/1e6);
+//#endif
+//	double *expr3 = expr2;
+//	double *expr4 = (double*)malloc(sizeof(double) * nodes * LAYERS);
+//
+//#ifdef TIME_INDIVIDUAL 
+//	printf(" Assembling right-hand side... ");
+//	startTimer(&StartingTime); 
+//#endif
+//	wrap_zero_1(0, nodes * LAYERS,
+//		expr4,
+//		LAYERS);
+//	wrap_rhs(0, cells,
+//		expr4, map_3D,
+//		coords_3D, map_3D,
+//		expr2, map_3D,
+//		expr3, map_3D,
+//		off_3D, off_3D, off_3D, off_3D, LAYERS);
+//
+//#ifdef TIME_INDIVIDUAL
+//	elapsed = getTimer(StartingTime, Frequency);
+//	printf("%g s\n", elapsed/1e6);
+//#endif
 
 	double *expr5 = (double*)malloc(sizeof(double) * nodes * LAYERS);
 #ifdef TIME_INDIVIDUAL 
@@ -226,57 +226,59 @@ int main (int argc, char *argv[])
 	if(e = cudaMemset(buffer2, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	if(e = cudaMemset(buffer3, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
-	// Evaluating Expression
-#ifdef TIME_INDIVIDUAL
-	printf(" Evaluating expression... ");
-	startTimer(&StartingTime);
-#endif
-
-	wrap_expression_1_GPU<<<nodes, LAYERS>>>(buffer1, coords_3DGPU);
+//	// Evaluating Expression
+//#ifdef TIME_INDIVIDUAL
+//	printf(" Evaluating expression... ");
+//	startTimer(&StartingTime);
+//#endif
+//
+//	wrap_expression_1_GPU<<<nodes, LAYERS>>>(buffer1, coords_3DGPU);
+//	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+//
+//#ifdef TIME_INDIVIDUAL
+//	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+//	elapsed = getTimer(StartingTime, Frequency);
+//	printf("%g s\n", elapsed/1e6);
+//
+//	printf(" Interpolate expression... ");
+//	startTimer(&StartingTime); 
+//#endif
+//
+//	wrap_rhs_1_GPU<<<cells, LAYERS>>>(buffer2, coords_3DGPU, buffer1, map_3DGPU, LAYERS);
+//	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+//	
+//#ifdef TIME_INDIVIDUAL
+//	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+//	elapsed = getTimer(StartingTime, Frequency);
+//	printf("%g s\n", elapsed/1e6);
+//
+//	printf(" Assembling right-hand side... ");
+//	startTimer(&StartingTime); 
+//#endif
+//
+//	if(e = cudaMemset(buffer1, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+//	wrap_rhs_GPU<<<cells, LAYERS>>>(buffer1, coords_3DGPU, buffer2, map_3DGPU, LAYERS);
+//	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+//	
+//#ifdef TIME_INDIVIDUAL
+//	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+//	elapsed = getTimer(StartingTime, Frequency);
+//	printf("%g s\n", elapsed/1e6);
+//
+//	printf(" Assembling left-hand side... ");
+//	startTimer(&StartingTime); 
+//#endif
+	dim3 gridSize;
+	gridSize.x = 8192;
+	gridSize.y = 6;
+	wrap_lhs_GPU<<<gridSize, LAYERS>>>(buffer3, coords_3DGPU, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 
-#ifdef TIME_INDIVIDUAL
-	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
-
-	printf(" Interpolate expression... ");
-	startTimer(&StartingTime); 
-#endif
-
-	wrap_rhs_1_GPU<<<cells, LAYERS>>>(buffer2, coords_3DGPU, buffer1, map_3DGPU, LAYERS);
-	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	
-#ifdef TIME_INDIVIDUAL
-	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
-
-	printf(" Assembling right-hand side... ");
-	startTimer(&StartingTime); 
-#endif
-
-	if(e = cudaMemset(buffer1, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
-	wrap_rhs_GPU<<<cells, LAYERS>>>(buffer1, coords_3DGPU, buffer2, map_3DGPU, LAYERS);
-	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	
-#ifdef TIME_INDIVIDUAL
-	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
-
-	printf(" Assembling left-hand side... ");
-	startTimer(&StartingTime); 
-#endif
-
-	wrap_lhs_GPU<<<cells, LAYERS>>>(buffer3, coords_3DGPU, map_3DGPU, LAYERS);
-	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
-
-#ifdef TIME_INDIVIDUAL
-	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
-#endif
+//#ifdef TIME_INDIVIDUAL
+//	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+//	elapsed = getTimer(StartingTime, Frequency);
+//	printf("%g s\n", elapsed/1e6);
+//#endif
 
 
 	/*
@@ -305,14 +307,14 @@ int main (int argc, char *argv[])
 			break;
 		}
 	}
-	for (int i = 0; i < nodes * LAYERS; ++i)
-	{
-		if (std::abs((expr4[i] / rhs[i]) - 1) > 0.000001)
-		{
-			printf("RHS differs\n");
-			break;
-		}
-	}
+	//for (int i = 0; i < nodes * LAYERS; ++i)
+	//{
+	//	if (std::abs((expr4[i] / rhs[i]) - 1) > 0.000001)
+	//	{
+	//		printf("RHS differs\n");
+	//		break;
+	//	}
+	//}
 #endif
 
 	output(FILE_RHS, lhs, nodes * LAYERS, 1);
@@ -331,10 +333,10 @@ int main (int argc, char *argv[])
 	free(map_3D);
 
 #ifdef CHECK_VS_CPU
-	free(expr1);
-	free(expr2);
+	//free(expr1);
+	//free(expr2);
 	//free(expr3);
-	free(expr4);
+	//free(expr4);
 	free(expr5);
 #endif // CHECK_VS_CPU
 
