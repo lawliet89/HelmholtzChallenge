@@ -28,6 +28,22 @@ There are two avenues for parallerise the work being done: over each ``column'' 
 The results shown in table \ref{table:threads} confirms our hypothesis. We notice that threading by columns gives the largest amount of speed up over the original version, by approximately a factor of four. For threading by cell, the performance for most operations are improved significantly, though not as much as threading by columns. Finally, interpolating expressions became slower in this version because of the overheads in thread scheduling when each thread does too little work.
 
 \section{CUDA Acceleration}
+
+Checking disassembly, the constant matricies used in wrap_lhs_GPU were stored on the stack, in local memory. These were then accessed in the hot loop.
+Moving constant data from the kernel to constant data memory improved execution time from 154ms to 64ms for 1.5M threads total (for 1/20th of the full small mesh, for testing)
+From IPC 0.4 to 0.77.
+Local memory from 133Mreq, 19GB to 61Mreq, 8GB.
+In both cases we get 125GB/s, so we have a good indication that local memory may still be the bottleneck.
+For comaprison, Global memory is currently 3.3Mreq/s.
+
+Before transpose 70ms for 1/20, 116 after: transpose made it worse for some reason!
+
+For RHS: 114ms before constant memory.
+
+After basically only constant memory optimisations, we have total times:
+CPU: 43.9s
+GPU: 2.58s
+
 \section{Summary Table}
 \subsection{Threading Performance}
 Testing was done on a laptop with Intel Core i7-4700MQ with 4 cores running on Linux 13.10. The programs were compiled with GCC with optimisation set to level 3. The results are summarised in the table below, and the times are consistent across several runs with very minor variations. The times for the steps ``Set array to zero'' and ``Evaluating expression'' are not reported because they are trivial cases that has been optimised by the compiler. The timings were generated from the large mesh.
