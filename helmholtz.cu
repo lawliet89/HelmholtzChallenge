@@ -23,7 +23,7 @@
 
 #include <cuda_runtime.h>
 
-#define CHECK_VS_CPU
+//#define CHECK_VS_CPU
 //#define TIME_INDIVIDUAL
 
 void startTimer(LARGE_INTEGER *timer) {
@@ -286,7 +286,9 @@ int main (int argc, char *argv[])
 	/*
 	* RHS and LHS output
 	*/
-	cudaDeviceSynchronize();
+
+	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	
 	double *lhs = (double*)malloc(sizeof(double) * nodes * LAYERS);
 	if(e = cudaMemcpy(lhs, buffer3, expr_size, cudaMemcpyDeviceToHost)) 
 		printf("Cuda error %d on line %d\n", e, __LINE__);
@@ -329,10 +331,10 @@ int main (int argc, char *argv[])
 	cudaFree(buffer3);
 	free(lhs);
 	free(rhs);
-
-#ifdef CHECK_VS_CPU
 	free(coords_3D);
 	free(map_3D);
+
+#ifdef CHECK_VS_CPU
 	free(expr1);
 	free(expr2);
 	//free(expr3);
