@@ -205,7 +205,7 @@ __global__ void wrap_rhs_1_GPU(double* __restrict__ outarr,
 	double detJ;
 	{ const double d_00 = J[4]*J[8] - J[5]*J[7]; const double d_01 = J[5]*J[6] - J[3]*J[8]; const double d_02 = J[3]*J[7] - J[4]*J[6]; const double d_10 = J[2]*J[7] - J[1]*J[8]; const double d_11 = J[0]*J[8] - J[2]*J[6]; const double d_12 = J[1]*J[6] - J[0]*J[7]; const double d_20 = J[1]*J[5] - J[2]*J[4]; const double d_21 = J[2]*J[3] - J[0]*J[5]; const double d_22 = J[0]*J[4] - J[1]*J[3]; detJ = J[0]*d_00 + J[3]*d_10 + J[6]*d_20; K[0] = d_00 / detJ; K[1] = d_10 / detJ; K[2] = d_20 / detJ; K[3] = d_01 / detJ; K[4] = d_11 / detJ; K[5] = d_21 / detJ; K[6] = d_02 / detJ; K[7] = d_12 / detJ; K[8] = d_22 / detJ; }
 	const double det = fabs(detJ);
-	
+
 	double A[6] = {0};
 	for (int ip = 0; ip<8; ip++)
 	{
@@ -391,14 +391,15 @@ __global__ void wrap_lhs_GPU(double* __restrict__ outarr,
 	double detJ;
 	do { const double d_00 = J[4]*J[8] - J[5]*J[7]; const double d_01 = J[5]*J[6] - J[3]*J[8]; const double d_02 = J[3]*J[7] - J[4]*J[6]; const double d_10 = J[2]*J[7] - J[1]*J[8]; const double d_11 = J[0]*J[8] - J[2]*J[6]; const double d_12 = J[1]*J[6] - J[0]*J[7]; const double d_20 = J[1]*J[5] - J[2]*J[4]; const double d_21 = J[2]*J[3] - J[0]*J[5]; const double d_22 = J[0]*J[4] - J[1]*J[3]; detJ = J[0]*d_00 + J[3]*d_10 + J[6]*d_20; K[0] = d_00 / detJ; K[1] = d_10 / detJ; K[2] = d_20 / detJ; K[3] = d_01 / detJ; K[4] = d_11 / detJ; K[5] = d_21 / detJ; K[6] = d_02 / detJ; K[7] = d_12 / detJ; K[8] = d_22 / detJ; } while (0);
 	const double det = fabs(detJ);
-	double A[6][6] = {{0}};
-	for (int ip = 0; ip<8; ip++)
+
+	for (int j = 0; j<6; j++)
 	{
-		for (int j = 0; j<6; j++)
+		for (int k = 0; k<6; k++)
 		{
-			for (int k = 0; k<6; k++)
+			double accum = 0;
+			for (int ip = 0; ip<8; ip++)
 			{
-				A[j][k] += (((FE0[ip][k]*FE0[ip][j]) +
+				accum += (((FE0[ip][k]*FE0[ip][j]) +
 					(((K[2]*FE0_D100[ip][k]) +
 					(K[5]*FE0_D010[ip][k]) +
 					(K[8]*FE0_D001[ip][k]))*((K[2]*FE0_D100[ip][j]) +
@@ -415,7 +416,7 @@ __global__ void wrap_lhs_GPU(double* __restrict__ outarr,
 					(K[3]*FE0_D010[ip][j]) +
 					(K[6]*FE0_D001[ip][j]))))*det*W8[ip]);
 			}
+			atomicAdd(outarr + curr_verts[j], accum);
 		}
 	}
-	addto_vector(outarr, A, 6, curr_verts, 6, curr_verts, 0);
 }
