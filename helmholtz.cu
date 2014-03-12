@@ -24,7 +24,7 @@
 #include <cuda_runtime.h>
 
 //#define CHECK_VS_CPU
-//#define TIME_INDIVIDUAL
+#define TIME_INDIVIDUAL
 
 void startTimer(LARGE_INTEGER *timer) {
     QueryPerformanceCounter(timer);
@@ -203,9 +203,6 @@ int main (int argc, char *argv[])
 #ifndef TIME_INDIVIDUAL 
 	startTimer(&StartingTime); 
 #endif
-	cudaStream_t stream[2];
-	cudaStreamCreate(&stream[0]);
-	cudaStreamCreate(&stream[1]);
 
 	// Send coords to GPU
 	size_t coord_3D_size = sizeof(double) * nodes * 3 * LAYERS;
@@ -219,69 +216,68 @@ int main (int argc, char *argv[])
 	if(e = cudaMalloc(&map_3DGPU, map_3D_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	if(e = cudaMemcpy(map_3DGPU, map_3D, map_3D_size, cudaMemcpyHostToDevice)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
+	// RHS calculation ping-pong buffer1-2. LHS result in buffer3
 	double *buffer1, *buffer2, *buffer3;
 	if(e = cudaMalloc(&buffer1, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	if(e = cudaMalloc(&buffer2, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	if(e = cudaMalloc(&buffer3, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
+	// Memset is very fast (milliseconds). Buffer1 inital contents generated on device
 	if(e = cudaMemset(buffer2, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
-
-#ifdef TIME_INDIVIDUAL 
-	printf(" Assembling left-hand side... ");
-	startTimer(&StartingTime); 
-#endif
-	if(e = cudaMemsetAsync(buffer3, 0, expr_size, stream[1])) printf("Cuda error %d on line %d\n", e, __LINE__);
-
-	wrap_lhs_GPU<<<cells, LAYERS, 0, stream[1]>>>(buffer3, coords_3DGPU, map_3DGPU, LAYERS);
-	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
-
-#ifdef TIME_INDIVIDUAL
-	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
-	elapsed = getTimer(StartingTime, Frequency);
-	printf("%g s\n", elapsed/1e6);
-#endif
+	if(e = cudaMemset(buffer3, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 	// Evaluating Expression
 #ifdef TIME_INDIVIDUAL
 	printf(" Evaluating expression... ");
 	startTimer(&StartingTime);
 #endif
-	wrap_expression_1_GPU<<<nodes, LAYERS, 0, stream[0]>>>(buffer1, coords_3DGPU);
+
+	wrap_expression_1_GPU<<<nodes, LAYERS>>>(buffer1, coords_3DGPU);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 #ifdef TIME_INDIVIDUAL
 	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
-#endif
 
-#ifdef TIME_INDIVIDUAL 
 	printf(" Interpolate expression... ");
 	startTimer(&StartingTime); 
 #endif
-	wrap_rhs_1_GPU<<<cells, LAYERS, 0, stream[0]>>>(buffer2, coords_3DGPU, buffer1, map_3DGPU, LAYERS);
+
+	wrap_rhs_1_GPU<<<cells, LAYERS>>>(buffer2, coords_3DGPU, buffer1, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	
 #ifdef TIME_INDIVIDUAL
 	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
-#endif
 
-#ifdef TIME_INDIVIDUAL 
 	printf(" Assembling right-hand side... ");
 	startTimer(&StartingTime); 
 #endif
-	if(e = cudaMemsetAsync(buffer1, 0, expr_size, stream[0])) printf("Cuda error %d on line %d\n", e, __LINE__);
 
-	wrap_rhs_GPU<<<cells, LAYERS, 0, stream[0]>>>(buffer1, coords_3DGPU, buffer2, map_3DGPU, LAYERS);
+	if(e = cudaMemset(buffer1, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+	wrap_rhs_GPU<<<cells, LAYERS>>>(buffer1, coords_3DGPU, buffer2, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	
 #ifdef TIME_INDIVIDUAL
 	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	elapsed = getTimer(StartingTime, Frequency);
 	printf("%g s\n", elapsed/1e6);
+
+	printf(" Assembling left-hand side... ");
+	startTimer(&StartingTime); 
 #endif
+
+	wrap_lhs_GPU<<<cells, LAYERS>>>(buffer3, coords_3DGPU, map_3DGPU, LAYERS);
+	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+#ifdef TIME_INDIVIDUAL
+	if(e = cudaDeviceSynchronize()) printf("Cuda error %d on line %d\n", e, __LINE__);
+	elapsed = getTimer(StartingTime, Frequency);
+	printf("%g s\n", elapsed/1e6);
+#endif
+
 
 	/*
 	* RHS and LHS output
