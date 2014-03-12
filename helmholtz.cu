@@ -23,7 +23,7 @@
 
 #include <cuda_runtime.h>
 
-#define CHECK_VS_CPU
+//#define CHECK_VS_CPU
 //#define TIME_INDIVIDUAL
 
 void startTimer(LARGE_INTEGER *timer) {
@@ -244,7 +244,7 @@ int main (int argc, char *argv[])
 	startTimer(&StartingTime); 
 #endif
 
-	wrap_rhs_1_GPU<<<cells, LAYERS>>>(buffer2, coords_3DGPU, buffer1, map_3DGPU, LAYERS);
+	wrap_rhs_1_GPU<<<cells/20, LAYERS>>>(buffer2, coords_3DGPU, buffer1, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	
 #ifdef TIME_INDIVIDUAL
@@ -257,7 +257,7 @@ int main (int argc, char *argv[])
 #endif
 
 	if(e = cudaMemset(buffer1, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
-	wrap_rhs_GPU<<<cells, LAYERS>>>(buffer1, coords_3DGPU, buffer2, map_3DGPU, LAYERS);
+	wrap_rhs_GPU<<<cells/20, LAYERS>>>(buffer1, coords_3DGPU, buffer2, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 	
 #ifdef TIME_INDIVIDUAL
@@ -269,7 +269,7 @@ int main (int argc, char *argv[])
 	startTimer(&StartingTime); 
 #endif
 
-	wrap_lhs_GPU<<<cells, LAYERS>>>(buffer3, coords_3DGPU, map_3DGPU, LAYERS);
+	wrap_lhs_GPU<<<cells/20, LAYERS>>>(buffer3, coords_3DGPU, map_3DGPU, LAYERS);
 	if(e = cudaGetLastError()) printf("Cuda error %d on line %d\n", e, __LINE__);
 
 #ifdef TIME_INDIVIDUAL
