@@ -399,22 +399,42 @@ __global__ void wrap_lhs_GPU(double* __restrict__ outarr,
 		{
 			for (int k = 0; k<6; k++)
 			{
-				accum[j][k] += (((FE0[ip][k]*FE0[ip][j]) +
-					(((K[2]*FE0_D100[ip][k]) +
-					(K[5]*FE0_D010[ip][k]) +
-					(K[8]*FE0_D001[ip][k]))*((K[2]*FE0_D100[ip][j]) +
-					(K[5]*FE0_D010[ip][j]) +
-					(K[8]*FE0_D001[ip][j]))) +
-					(((K[1]*FE0_D100[ip][k]) +
-					(K[4]*FE0_D010[ip][k]) +
-					(K[7]*FE0_D001[ip][k]))*((K[1]*FE0_D100[ip][j]) +
-					(K[4]*FE0_D010[ip][j]) +
-					(K[7]*FE0_D001[ip][j]))) +
-					(((K[0]*FE0_D100[ip][k]) +
-					(K[3]*FE0_D010[ip][k]) +
-					(K[6]*FE0_D001[ip][k]))*((K[0]*FE0_D100[ip][j]) +
-					(K[3]*FE0_D010[ip][j]) +
-					(K[6]*FE0_D001[ip][j]))))*det*W8[ip]);
+				accum[j][k] += (
+					(
+						(FE0[ip][k]*FE0[ip][j]) +
+						(
+							(
+								(K[2]*FE0_D100[ip][k]) +
+								(K[5]*FE0_D010[ip][k]) +
+								(K[8]*FE0_D001[ip][k])
+							)*(
+								(K[2]*FE0_D100[ip][j]) +
+								(K[5]*FE0_D010[ip][j]) +
+								(K[8]*FE0_D001[ip][j])
+							)
+						) + (
+							(
+								(K[1]*FE0_D100[ip][k]) +
+								(K[4]*FE0_D010[ip][k]) +
+								(K[7]*FE0_D001[ip][k])
+							)*(
+								(K[1]*FE0_D100[ip][j]) +
+								(K[4]*FE0_D010[ip][j]) +
+								(K[7]*FE0_D001[ip][j])
+							)
+						) + (
+							(
+								(K[0]*FE0_D100[ip][k]) +
+								(K[3]*FE0_D010[ip][k]) +
+								(K[6]*FE0_D001[ip][k])
+							)*(
+								(K[0]*FE0_D100[ip][j]) +
+								(K[3]*FE0_D010[ip][j]) +
+								(K[6]*FE0_D001[ip][j])
+							)
+						)
+					)*det*W8[ip]
+				);
 			}
 		}
 	}

@@ -24,7 +24,7 @@
 #include <cuda_runtime.h>
 
 //#define CHECK_VS_CPU
-//#define TIME_INDIVIDUAL
+#define TIME_INDIVIDUAL
 
 void startTimer(LARGE_INTEGER *timer) {
     QueryPerformanceCounter(timer);
