@@ -7,6 +7,25 @@
 \usepackage{graphicx} % support the \includegraphics command and options
 \usepackage{hyperref} % use hyperlinked ToC
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=black, filecolor=black, urlcolor=black}
+\usepackage{listings} %for code listings
+\usepackage{color} %for colored syntax highligting
+
+%%% Code listing
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\lstset{breaklines=true,
+basicstyle=\footnotesize\ttfamily,
+commentstyle=\color{mygreen},
+keywordstyle=\color{blue},
+numberstyle=\tiny\color{mygray},
+tabsize=2,
+frame=tb,
+aboveskip=5mm,
+belowskip=0mm,
+breaklines=true,
+breakatwhitespace=true
+}
 
 \usepackage{titling}
 \setlength{\droptitle}{-3cm}   % title offset
@@ -244,17 +263,36 @@ Naturally, when we time the GPU performance, we omit this writeback and the asso
 	\label{fig:membBWorig}
 \end{figure}
 
+\begin{figure}[tb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{"LHS memory overview BW"}
+	\end{center}
+	\caption{Memory bandwidth overview of constant memory implementation}
+	\label{fig:membBWfinal}
+\end{figure}
+
+Profiling the initial imoplementation we see that the memory bandwith to local memory is very high, and that the L1 and L2 cache hits are very low, and therefore we have a lot of local memory transactions to off-chip memory. This is shown in Figure~\ref{fig:membBWorig}.
+Checking the disassembly, we see that the large constant matricies used in the computation is pushed onto the stack, which is stored in local memory.
+Even though these matricies are constant across all threads in the kernel, they each have a destinct stack, and therefore the L1 and L2 cache will not properly cache the access to these matricies.
+Therefore, as these matricies are then accessed in the hot loop of the kernels, prompts several fetches from off-chip memory for every iteration. This makes for very poor performance.
+
+The GK-104 offeres a special constant-memory cache which is destinct from the L1 and L2 cache. This cache will only store variables which are declared in global scope and with the \verb.__constant__. qualifier.
+
 \begin{table}[tb]
-	\caption{Comparison of execution times for constant memory optimisation}
+	\caption{Comparison of execution times for constant memory optimisation on small mesh.}
 	\label{tab:constMemExeTime}
 	\begin{center}
-		\begin{tabular}{l|cc}
+		\begin{tabular}{l|cc|cc}
 		\hline
 
 		\hline
-		\textbf{column 1} & \textbf{column 2} & \textbf{column 3} \\
+
+		& \multicolumn{2}{c|}{\textbf{Execution time}} & \multicolumn{2}{c}{\textbf{Local Memory Use}} \\
+		\textbf{Memory} & \textbf{Local} & \textbf{Constant} & \textbf{Local} & \textbf{Constant} \\
 		\hline
-			 & & \\
+			\textbf{Kernel} &&&&\\
+			LHS 	& 3.08 	& 1.28 & 385GB & 93GB \\
+			All 	& 5.68 	& 2.58 \\
 		\hline
 
 		\hline
@@ -272,6 +310,16 @@ Naturally, when we time the GPU performance, we omit this writeback and the asso
 	\item Fail : ILP? IP-k result reuse?
 	\item Final version: 2x6 accum streams, for: ip, k, j (2k 6j streams)
 \end{itemize}
+
+\begin{lstlisting}[frame=, language=C++, caption=LHS kernel main loop]
+for (int ip = 0; ip<8; ip++){
+	for (int k = 0; k<6; k++){
+		for (int j = 0; j<6; j++){
+			A[k%2][j] += LargeExpression;
+		}
+	}
+}
+\end{lstlisting}
 
 % subsection reducing_register_spill (end)
 
