@@ -222,7 +222,7 @@ The \texttt{expression 2} kernel was observed to be doing a trivial direct copy 
 
 For \texttt{rhs} and \texttt{lhs} kernels, each thread performs the whole computation over a cell (i.e. the 8x6x6 nested loop). The threads are packed into blocks in column order, to allow adjacent threads in a warp to do coalesced reads and writes to input/output data as it is stored sequentially for a column of nodes. As in the TBB version, accumulation of results to the global vector was made atomic.
 
-To verify correctness, buffer states after each kernel pass were copied to the host and compared against the results of its computation (reference code). Naturally, for release builds, all memory is kept on the device until the final output buffer copy back.
+To verify correctness, buffer states after each kernel pass were copied to the host and compared against the results of its reference computation. Naturally, for release builds, all memory is kept on the device until the final output buffer copy back.
 
 % subsection initial_implementation (end)
 
