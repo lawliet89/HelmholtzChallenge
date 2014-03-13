@@ -43,7 +43,7 @@ The given implementation consists of a serial execution of the following stages:
 
 \texttt{lhs and rhs} kernels perform local assembly with eight double precision multiply-accumulate expressions per node of a cell (arranged in a reduction tree). Note that the two sides of the equation are independent and could be computed in parallel on a device with sufficient resources.
 
-The provided implementation, processing the \texttt{small} mesh on a i7-3770K CPU (see appendix \ref{sub:cpu} for more details) takes the following amount of time: 72.8s breakdown: (eval: 6.90s, interp: 2.58s, RHS: 13.4s, LHS: 46.3s). The runtimes were averaged over a set of runs, note that DVFS was enabled and made the frequency of the relevant core float between 3.5 GHz and 3.9 GHz.
+The provided implementation, processing the \texttt{small} mesh on a i7-3770K CPU (see appendix \ref{sub:cpu} for more details) takes (averaged over a set of runs) 72.8s (eval: 6.90s, interp: 2.58s, RHS: 13.4s, LHS: 46.3s). Dynamic voltage and frequency scaling (DVFS) was enabled, making the frequency of the relevant core float between 3.5 GHz and 3.9 GHz during execution.
 
 % subsection default_implementation (end)
 
@@ -52,13 +52,13 @@ The provided implementation, processing the \texttt{small} mesh on a i7-3770K CP
 
 TODO
 
+which loops looked like they had parallelisable iterations, which seemed to be most prospectful
+
 initial look at how kernels can be parallelised and verifying correctness through tbb, which is a thingie thingie (library, no compiler dependencies)
 and allows for quick parforing of loops
 
-note OS choice - Win, mostly due to cuda tooling requirements. Required a change in timing...
 
-
-Timing is done by using the Windows API function `QueryPerformanceCounter` (QPC) which provides time stamps with 1 microsecond resolution. Because the processor supports invariant Time Stamp Counter (TSC), Windows will execute the RDTSC or RDTSCP processor instruction to read the TSC register. This has very low latency and overhead (in the order of tens or hundreds of clock cycles). The invariant TSC will always give a number of clock cycles since the processor has started up as if was running at the maximum clock speed, meaning readings are not affected by dynamic voltage and frequency scaling. The algorithm employed by Windows will also work across multiple processors, threads, and processes with an ambiguity of +- 1 tick.
+Given that the target device for final optimisation was an Nvidia GPU, with the intention to use CUDA language and tooling, the operating system was chosen to be Windows for profiling support. As a consequence, the timing code had to be ported, instead using the Windows API function `QueryPerformanceCounter` which provides time stamps with 1 microsecond resolution. The implementation is opaque, but guaranteed to be precise, likely using the invariant Time Stamp Counter (TSC) found on the CPU, with necessary OS-level compensation. Therefore the timing is accurate across threads, cores and independent of DVFS.
 
 
 in particular, at this stage, the loops x and y in kernels z and w parfor'd, runtime were
@@ -172,7 +172,7 @@ Processor 1     ID = 0
   Ratio 2 cores   39x
   Ratio 3 cores   38x
   Ratio 4 cores   37x
-  TSC     3510.2 MHz
+  TSC       3510.2 MHz
   APERF     3730.9 MHz
   MPERF     3481.3 MHz
 \end{verbatim}
