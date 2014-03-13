@@ -24,7 +24,7 @@
 #include <cuda_runtime.h>
 
 #define CHECK_VS_CPU
-#define TIME_INDIVIDUAL
+//#define TIME_INDIVIDUAL
 
 void startTimer(LARGE_INTEGER *timer) {
     QueryPerformanceCounter(timer);
@@ -179,7 +179,6 @@ int main (int argc, char *argv[])
 	wrap_zero_1(0, nodes * LAYERS,
 		expr5,
 		LAYERS);
-	startTimer(&StartingTime);
 	wrap_lhs(0, cells,
 		expr5, map_3D, map_3D,
 		coords_3D, map_3D,
