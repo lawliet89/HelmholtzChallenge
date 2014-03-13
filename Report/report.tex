@@ -57,7 +57,7 @@ Looking at serial runtimes, we see that \texttt{lhs} and \texttt{rhs} kernel cal
 
 It can easily be seen that all of the cell computations are independent, given that the global vector accumulation is made atomic. Possible iteration space parallelisation strategies include parallelising over either cells, columns of cells, the \texttt{ip} loop or some combination of these.
 
-The initial parallelisation of the code was done on the CPU using Intel Threading Building Blocks (TBB). TBB is a C++ template library for expressing task-based parallelism and includes dynamic task scheduling and scalable memory allocators. The library does not require a special compiler, can be used productively and generates performance-portable code across processor with different core counts.
+The initial parallelisation of the code was done on the CPU using Intel Threading Building Blocks (TBB)\cite{tbbr}. TBB is a C++ template library for expressing task-based parallelism and includes dynamic task scheduling and scalable memory allocators. The library does not require a special compiler, can be used productively and generates performance-portable code across processor with widely different core counts.
 
 The TBB version of the FEM code was written to ensure that the chosen parallelisations are correct and in general was very straightforward, essentially replacing \texttt{for} loops with \texttt{parallel\_for} constructs.
 
@@ -67,7 +67,7 @@ TODO: include runtimes with tbb-cell and tbb-column.
 
 \subsection{Timing code changes} % (fold)
 \label{sub:timing_code_changes}
-Given that the target device for final optimisation was an Nvidia GPU, with the intention to use CUDA language and tooling, the operating system was chosen to be Windows for profiling tool support. As a consequence, timing code had to be ported, instead using the Windows API function \texttt{QueryPerformanceCounter} which provides time stamps with 1 microsecond resolution. Its implementation is opaque, but guaranteed to be accurate, consistent and monotonic. It is likely using the invariant Time Stamp Counter (TSC) found on the CPU, with necessary OS-level compensation, making timestamps synchronised across processor cores and independent of DVFS.
+Given that the target device for final optimisation was an Nvidia GPU, with the intention to use CUDA language and tooling, the operating system was chosen to be Windows for profiling tool support. As a consequence, timing code had to be ported, instead using the Windows API function \texttt{QueryPerformanceCounter}\cite{QPC} which provides time stamps with 1 microsecond resolution. Its implementation is opaque, but guaranteed to be accurate, consistent and monotonic. It is likely using the invariant Time Stamp Counter (TSC) found on the CPU, with necessary OS-level compensation, making timestamps synchronised across processor cores and independent of DVFS.
 % subsection timing_code_changes (end)
 
 
@@ -326,7 +326,9 @@ Windows Version     Microsoft Windows 7 (6.1)
 \label{sub:cuda}
 Compilation via:
 \begin{verbatim}
-nvcc.exe -gencode=arch=compute_30,code=\"sm_30,compute_30\" --use-local-env --cl-version 2012 -maxrregcount=0  --machine 64 --compile -cudart static -DWIN64 -DNDEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /O2 /Zi /MD"
+nvcc.exe -gencode=arch=compute_30,code=\"sm_30,compute_30\" --use-local-env 
+         --cl-version 2012 -maxrregcount=0  --machine 64 --compile -cudart static 
+         -DWIN64 -DNDEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /O2 /Zi /MD"
 \end{verbatim}
 
 \end{appendices}
@@ -404,6 +406,16 @@ This table needn't be longer than half a page (a page at most if you really real
 %http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2
 
 \begin{thebibliography}{9}
+
+  \bibitem{tbbr}
+  Intel,
+  \emph{Intel Threding Building Blocks}. \\
+  \url{https://www.threadingbuildingblocks.org}
+
+  \bibitem{QPC}
+  Microsoft,
+  \emph{Developer reference - QueryPerformanceCounter function}. \\
+  \url{http://msdn.microsoft.com/en-us/library/windows/desktop/ms644904(v=vs.85).aspx}
 
 	\bibitem{GK-104 Whitepaper}
 	Nvidia,
