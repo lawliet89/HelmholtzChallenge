@@ -122,7 +122,7 @@ GPU: 2.58s
 
 Final GPU:
 Total: 2.23 seconds. See timeline for breakdown. (27ms, 160ms, 715ms, 980ms)
-Serialisation 57\%
+Average Serialisation 57\%
 
 
 
@@ -193,25 +193,43 @@ Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the cur
 
 % subsection introduction_to_the_gk_104 (end)
 
-\subsection{Implementation} % (fold)
-\label{sub:implementation}
+\subsection{Initial Implementation} % (fold)
+\label{sub:initial_implementation}
 
+% subsection initial_implementation (end)
 
-
-% subsection implementation (end)
-
-\subsection{Final profiling results} % (fold)
-\label{sub:final_profiling_results}
+\subsection{Constant Memory Optimisation} % (fold)
+\label{sub:constant_memory_optimisation}
 
 \begin{figure}[tb]
 	\begin{center}
-		\includegraphics[]{LHS efficency and stall reason}
+		\includegraphics[width=\textwidth]{"Original nonconst LHS memory overview BW"}
 	\end{center}
-	\caption{LHS efficency and stall reasons}
+	\caption{Memory bandwidth overview of original Implementation}
+	\label{fig:membBWorig}
+\end{figure}
+
+% subsection constant_memory_optimisation (end)
+
+\subsection{Reducing register spill} % (fold)
+\label{sub:reducing_register_spill}
+
+% subsection reducing_register_spill (end)
+
+\subsection{Final Profiling} % (fold)
+\label{sub:final_profiling}
+
+\begin{figure}[tb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{"LHS efficency and stall reason"}
+	\end{center}
+	\caption{LHS issue efficency and stall reasons}
 	\label{fig:issue_eff_and_stall_reasons}
 \end{figure}
 
-% subsection final_profiling_results (end)
+This suggests that if double precision is nessecary for the application, then perhaps the GK-104 is not the best choice. Indeed, the GK-110 has 64 double precision units per SMX, and would be a much better choice for this workload.
+
+% subsection final_profiling (end)
 
 
 % section gpu_and_cuda (end)
