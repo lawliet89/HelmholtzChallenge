@@ -4,6 +4,9 @@
 \usepackage{verbatim}
 \usepackage{tabularx}
 \usepackage[toc,page]{appendix}
+\usepackage{graphicx} % support the \includegraphics command and options
+\usepackage{hyperref} % use hyperlinked ToC
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, filecolor=black, urlcolor=black}
 
 \usepackage{titling}
 \setlength{\droptitle}{-3cm}   % title offset
@@ -104,6 +107,8 @@ Local memory from 133Mreq, 19GB to 61Mreq, 8GB.
 In both cases we get 125GB/s, so we have a good indication that local memory may still be the bottleneck.
 For comaprison, Global memory is currently 3.3Mreq/s.
 
+Constant memory helps all kernels: total exe t before: 5.68, after 2.58.
+
 Before transpose 70ms for 1/20, 116 after: transpose made it worse for some reason!
 
 For RHS: 114ms before constant memory.
@@ -118,6 +123,95 @@ GPU: 2.58s
 Final GPU:
 Total: 2.23 seconds. See timeline for breakdown. (27ms, 160ms, 715ms, 980ms)
 Serialisation 57\%
+
+
+
+
+%INstruction throughput table
+%http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#arithmetic-instructions__throughput-native-arithmetic-instructions
+
+%GK 104 Whitepaper
+%http://www.geforce.com/Active/en_US/en_US/pdf/GeForce-GTX-680-Whitepaper-FINAL.pdf
+
+%Anandtech article (functional units division)
+%http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2
+
+\subsection{Introduction to the GK-104} % (fold)
+\label{sub:introduction_to_the_gk_104}
+
+We target the Nvidia GTX 670 GPU. This GPU is built with the GK-104 architecture.
+The GK-104 architecture consists of multiple instances of a Streaming Multiprocessor (SMX).
+The GTX 670 has 6 SMX on the chip. 
+
+As can be seen in the GK-104 SMX shown in Figure~\ref{fig:SMX}, each SMX consists of an instruction cache, four warp schedulers with two dispatch units each, a 64k entry 32-bit register file, many functional units, L1 cache and shared memory.
+The functional units are grouped into 15 functional unit blocks, with varying number of SIMD lanes \cite{Anand}. These blocks are shown in Table~\ref{tab:funcunits}.
+
+This architecture has a fundamental SIMT width of 32. Nvidia calls a set of 32 SIMT threads a ``warp''.
+Each SMX has 4 warp shedulers, each managing up to 16 active warps. Each clock cycle, each of the warp shedulers will select one warp from their pool which is ready to run.
+Each warp scheduler is capable of super-scalar issue of 2 instructions per cycle from a selected warp.
+Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the currently executing context, and no structrual hazards, the collection of warp schedulers can issue up to 8 instructions per clock cycle.
+
+\begin{figure}[tb]
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{SMX}
+	\end{center}
+	\caption{GK-104 Streaming Multiprocessor (SMX) block diagram}
+	\label{fig:SMX}
+\end{figure}
+
+\begin{table}[tb]
+	\caption{GK-104 functional units per SMX \cite{Anand}.}
+	\label{tab:funcunits}
+	\begin{center}
+		\begin{tabular}{rl}
+		\hline
+
+		\hline
+		\textbf{\#} & \textbf{Type} \\
+		\hline
+			32 & CUDA cores (\#1) \\
+			32 & CUDA cores (\#2) \\
+			32 & CUDA cores (\#3) \\
+			32 & CUDA cores (\#4) \\
+			32 & CUDA cores (\#5) \\
+			32 & CUDA cores (\#6) \\
+			16 & Load/Store Units (\#1) \\
+			16 & Load/Store Units (\#2) \\
+			16 & Interpolation SFUs (\#1) \\
+			16 & Interpolation SFUs (\#2) \\
+			16 & Special Function SFUs (\#1) \\
+			16 & Special Function SFUs (\#2) \\
+			8 & Texture Units (\#1) \\
+			8 & Texture Units (\#2) \\
+			8 & CUDA FP64 cores \\
+		\hline
+
+		\hline
+		\end{tabular}
+	\end{center}
+\end{table}
+
+% subsection introduction_to_the_gk_104 (end)
+
+\subsection{Implementation} % (fold)
+\label{sub:implementation}
+
+
+
+% subsection implementation (end)
+
+\subsection{Final profiling results} % (fold)
+\label{sub:final_profiling_results}
+
+\begin{figure}[tb]
+	\begin{center}
+		\includegraphics[]{LHS efficency and stall reason}
+	\end{center}
+	\caption{LHS efficency and stall reasons}
+	\label{fig:issue_eff_and_stall_reasons}
+\end{figure}
+
+% subsection final_profiling_results (end)
 
 
 % section gpu_and_cuda (end)
@@ -211,7 +305,7 @@ Windows Version     Microsoft Windows 7 (6.1)
 \label{sub:cuda}
 Compilation via:
 \begin{verbatim}
-nvcc -arch compute_30 -code sm_30 -O3
+nvcc.exe -gencode=arch=compute_30,code=\"sm_30,compute_30\" --use-local-env --cl-version 2012 -maxrregcount=0  --machine 64 --compile -cudart static -DWIN64 -DNDEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /O2 /Zi /MD"
 \end{verbatim}
 
 \end{appendices}
@@ -277,6 +371,36 @@ This table needn't be longer than half a page (a page at most if you really real
 
 % section report_notes_on_deliverables (end)
 
+\clearpage
+
+%INstruction throughput table
+%http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#arithmetic-instructions__throughput-native-arithmetic-instructions
+
+%GK 104 Whitepaper
+%http://www.geforce.com/Active/en_US/en_US/pdf/GeForce-GTX-680-Whitepaper-FINAL.pdf
+
+%Anandtech article (functional units division)
+%http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2
+
+\begin{thebibliography}{9}
+
+	\bibitem{GK-104 Whitepaper}
+	Nvidia,
+	\emph{Whitepaper - NVIDIA GeForce GTX 680}. \\
+	\url{http://www.geforce.com/Active/en_US/en_US/pdf/GeForce-GTX-680-Whitepaper-FINAL.pdf}
+
+	\bibitem{Anand}
+	Ryan Smith,
+	\emph{The Kepler Architecture: Fermi Distilled}. \\
+	\url{http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2}
+
+	\bibitem{Progguide Instruction throughput}
+	Nvidia,
+	\emph{Cuda-C Programming Guide - Table 2. Throughput of Native Arithmetic Instructions}. \\
+	\url{http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#arithmetic-instructions__throughput-native-arithmetic-instructions}
+
+\end{thebibliography}
+
 \end{document}
 
 
@@ -325,26 +449,7 @@ The results shown in table \ref{table:threads} confirms our hypothesis. We notic
 
 \section{CUDA Acceleration}
 
-one thread per cell -> adjacent threads in blocks are staked vertically
 
-Checking disassembly, the constant matricies used in wrap_lhs_GPU were stored on the stack, in local memory. These were then accessed in the hot loop.
-Moving constant data from the kernel to constant data memory improved execution time from 154ms to 64ms for 1.5M threads total (for 1/20th of the full small mesh, for testing)
-From IPC 0.4 to 0.77.
-Local memory from 133Mreq, 19GB to 61Mreq, 8GB.
-In both cases we get 125GB/s, so we have a good indication that local memory may still be the bottleneck.
-For comaprison, Global memory is currently 3.3Mreq/s.
-
-Before transpose 70ms for 1/20, 116 after: transpose made it worse for some reason!
-
-For RHS: 114ms before constant memory.
-
-After basically only constant memory optimisations, we have total times:
-CPU: 72.8s breakdown: (eval: 6.90, interp: 2.58, RHS: 13.4, LHS: 46.3)
-GPU: 2.58s
-
-Final GPU:
-Total: 2.23 seconds. See timeline for breakdown. (27ms, 160ms, 715ms, 980ms)
-Serialisation 57\%
 
 
 \section{Summary Table}
