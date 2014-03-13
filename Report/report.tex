@@ -97,54 +97,54 @@ Given that the target device for final optimisation was an Nvidia GPU, with the 
 \section{GPU and CUDA} % (fold)
 \label{sec:gpu_and_cuda}
 
-TODO
+% TODO
 
-\ref{sub:gpu} appendix of rough gpu details, might wish to include stuff on SM 3.0 and such
+% \ref{sub:gpu} appendix of rough gpu details, might wish to include stuff on SM 3.0 and such
 
-using cuda toolkit bla, compiler ver bla, hardware bla , GK104 Kepler
+% using cuda toolkit bla, compiler ver bla, hardware bla , GK104 Kepler
 
-constant memory opt
+% constant memory opt
 
-hw for cos in expr1? 
+% hw for cos in expr1? 
 
-mention no intrinsic double precision atomics -> implemented through CAS, probably not as efficient as it could be
+% mention no intrinsic double precision atomics -> implemented through CAS, probably not as efficient as it could be
 
-register spilling, attempts to fix by transposing loops
+% register spilling, attempts to fix by transposing loops
 
-in the end -> DP functional unit hazards being the true bottleneck
-mention emulating DP through SP floats
-mixed precision algorithms can be a decent tradeoff, literature exists on the subject
-mention GK110 being specifically designed to improve DP performance over GK104.
+% in the end -> DP functional unit hazards being the true bottleneck
+% mention emulating DP through SP floats
+% mixed precision algorithms can be a decent tradeoff, literature exists on the subject
+% mention GK110 being specifically designed to improve DP performance over GK104.
 
-inlining addto\_vector
+% inlining addto\_vector
 
-TODO: How correctness was ensured... tester program?
+% TODO: How correctness was ensured... tester program?
 
-one thread per cell -> adjacent threads in blocks are staked vertically
+% one thread per cell -> adjacent threads in blocks are staked vertically
 
-Checking disassembly, the constant matricies used in wrap\_lhs\_GPU were stored on the stack, in local memory. These were then accessed in the hot loop.
-Moving constant data from the kernel to constant data memory improved execution time from 154ms to 64ms for 1.5M threads total (for 1/20th of the full small mesh, for testing)
-From IPC 0.4 to 0.77.
-Local memory from 133Mreq, 19GB to 61Mreq, 8GB.
-In both cases we get 125GB/s, so we have a good indication that local memory may still be the bottleneck.
-For comaprison, Global memory is currently 3.3Mreq/s.
+% Checking disassembly, the constant matricies used in wrap\_lhs\_GPU were stored on the stack, in local memory. These were then accessed in the hot loop.
+% Moving constant data from the kernel to constant data memory improved execution time from 154ms to 64ms for 1.5M threads total (for 1/20th of the full small mesh, for testing)
+% From IPC 0.4 to 0.77.
+% Local memory from 133Mreq, 19GB to 61Mreq, 8GB.
+% In both cases we get 125GB/s, so we have a good indication that local memory may still be the bottleneck.
+% For comaprison, Global memory is currently 3.3Mreq/s.
 
-Constant memory helps all kernels: total exe t before: 5.68, after 2.58.
+% Constant memory helps all kernels: total exe t before: 5.68, after 2.58.
 
-Before transpose 70ms for 1/20, 116 after: transpose made it worse for some reason!
+% Before transpose 70ms for 1/20, 116 after: transpose made it worse for some reason!
 
-For RHS: 114ms before constant memory.
+% For RHS: 114ms before constant memory.
 
-%%%
-After basically only constant memory optimisations, we have total times:
-CPU: 72.8s breakdown: (eval: 6.90, interp: 2.58, RHS: 13.4, LHS: 46.3)
-GPU: 2.58s
-%%%
+% %%%
+% After basically only constant memory optimisations, we have total times:
+% CPU: 72.8s breakdown: (eval: 6.90, interp: 2.58, RHS: 13.4, LHS: 46.3)
+% GPU: 2.58s
+% %%%
 
 
-Final GPU:
-Total: 2.23 seconds. See timeline for breakdown. (27ms, 160ms, 715ms, 980ms)
-Average Serialisation 57\%
+% Final GPU:
+% Total: 2.23 seconds. See timeline for breakdown. (27ms, 160ms, 715ms, 980ms)
+% Average Serialisation 57\%
 
 
 
@@ -158,22 +158,13 @@ Average Serialisation 57\%
 %Anandtech article (functional units division)
 %http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2
 
-\subsection{Introduction to the GK-104} % (fold)
+\subsection{GPU hardware} % (fold)
 \label{sub:introduction_to_the_gk_104}
 
-We target the Nvidia GTX 670 GPU. This GPU is built with the GK-104 architecture.
-The GK-104 architecture consists of multiple instances of a Streaming Multiprocessor (SMX).
-The GTX 670 has 6 SMX on the chip. 
+The target device is an Nvidia GTX 670 GPU with Kepler GK-104 architecture. The architecture is based on 6 Streaming Multiprocessors (SMX), structure of which is shown in Figure~\ref{fig:SMX}. Each SMX consists of an instruction cache, four warp schedulers with two dispatch units each, a 64k entry 32-bit register file, L1 cache and shared memory \cite{GK-104 Whitepaper}. The functional units are grouped into 15 functional unit blocks, with varying number of SIMD lanes \cite{Anand}. A breakdown of functional unit counts per SMX is shown in table~\ref{tab:funcunits}. The CUDA cores are the main functional units, which can execute a single precision floating point instruction per clock cycle. Five out of six blocks of the CUDA cores can also execute basic 32 bit integer arithmetic instructions.
 
-As can be seen in the GK-104 SMX shown in Figure~\ref{fig:SMX}, each SMX consists of an instruction cache, four warp schedulers with two dispatch units each, a 64k entry 32-bit register file, many functional units, L1 cache and shared memory \cite{GK-104 Whitepaper}.
-The functional units are grouped into 15 functional unit blocks, with varying number of SIMD lanes \cite{Anand}. These blocks are shown in Table~\ref{tab:funcunits}.
-The CUDA cores are the main functional units, which can execute a single precision floating point instruction per clock cycle. Five out of six blocks of the CUDA cores can also execute basic 32 bit integer arithmetic instructions.
-
-This architecture has a fundamental Single Instruction Multiple Threads (SIMT) width of 32. Nvidia calls a set of 32 SIMT threads a ``warp''.
-Each SMX has 4 warp shedulers, each managing up to 16 active warps. Each clock cycle, each of the warp shedulers will select one warp from their pool which is ready to run.
-Each warp scheduler is capable of super-scalar issue of 2 instructions per cycle from a selected warp.
-Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the currently executing context, and no structrual hazards, the collection of warp schedulers can issue up to 8 instructions per clock cycle.
-These instructions apply to the entire warp in a SIMT manner.
+This architecture has a fundamental Single Instruction Multiple Thread (SIMT) width of 32, referred to as a ``warp''.
+Each SMX has 4 warp shedulers, each managing up to 16 active warps. Each clock cycle, each warp sheduler selects a warp from the pool of warps ready to execute. Each warp scheduler is capable of super-scalar issue of 2 instructions per cycle from a selected warp. Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the currently executing context and no structrual hazards, the collection of warp schedulers can issue up to 8 warp-wide instructions per clock cycle.
 
 \begin{figure}[tb]
 	\begin{center}
