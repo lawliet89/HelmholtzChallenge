@@ -327,14 +327,14 @@ for (int ip = 0; ip<8; ip++){
 
 % subsection reducing_register_spill (end)
 
-\subsection{Final Profiling} % (fold)
-\label{sub:final_profiling}
+\subsection{Final Perfomance Remarks} % (fold)
+\label{sub:final_performance_remarks}
 
 \begin{figure}[tb]
 	\begin{center}
 		\includegraphics[width=\textwidth]{"LHS efficency and stall reason"}
 	\end{center}
-	\caption{LHS issue efficency and stall reasons}
+	\caption{LHS issue efficency and stall reasons. Note that average serialisation was 57\%.}
 	\label{fig:issue_eff_and_stall_reasons}
 \end{figure}
 
@@ -342,11 +342,19 @@ for (int ip = 0; ip<8; ip++){
 	\item DP Structural Hazard ultimate bottleneck
 \end{itemize}
 
-This suggests that if double precision is nessecary for the application, then perhaps the GK-104 is not the best choice. Indeed, the GK-110 has 64 double precision units per SMX, and would be a much better choice for this workload.
+As presented in Section~\ref{sub:introduction_to_the_gk_104}, we know that we only have eight double precision units per SMX. This ends up being the ultimate bottleneck for performance on this device.
+As we have four warp schedulers trying to schedule onto only a single double precison functional unit, we should, at least for double precision arithmetic instructions, expect a 25\% issue efficiency.
+Presented in Figure~\ref{fig:issue_eff_and_stall_reasons} is the issue efficiency and the stall reasons for the final LHS kernel.
+We see that the category ``other'' is by far the biggest stall reason. One of the conditions that increments the ``other'' stall reason performance counter is when ``the execution unit is busy'' \cite{IssueStallOther}.
+This means that we are very close to the fundamental limit of double precision execution for this device.
 
-As a consequence, a small benefit is that the thermal output of the device is less than 75\% of TDP. This means that the Dynamic Voltage and Freqency Scaling (DVFS) system will clock the GPU at its maximum frequency all the time.
+The profiling tools report an instruction serialisation metric of 57\%. As there are only eight double precision units, but a warp is 32 threads wide, we expect a seralisation of double precison instructions to be 75\%. Given that there are some other instructions besides the double precison arithmetic instructions, this serlialisation number aligns with theory.
 
-% subsection final_profiling (end)
+Interestingly, as a consequence of this very narrow bottleneck, a small benefit is that the thermal output of the device is less than 75\% of TDP. This means that the Dynamic Voltage and Freqency Scaling (DVFS) system will clock the GPU at its maximum frequency all the time.
+
+Finally, both the in-depth analysis of the archtecture, and the profiling results suggests that if double precision is nessecary for the application, then perhaps the GK-104 is not the best choice. Indeed, the GK-110 has 64 double precision units per SMX, and would be a much better choice for this workload.
+
+% subsection final_performance_remarks (end)
 
 
 % section gpu_and_cuda (end)
@@ -563,6 +571,11 @@ This table needn't be longer than half a page (a page at most if you really real
 	Nvidia,
 	\emph{CUDA-C Best Practices Guide}. \\
 	\url{http://docs.nvidia.com/cuda/cuda-c-best-practices-guide/}
+
+	\bibitem{IssueStallOther}
+	Greg Smith,
+	\emph{Stack Overflow Answer}. \\
+	\url{http://stackoverflow.com/a/15259419/1128910}
 
 \end{thebibliography}
 
