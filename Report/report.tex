@@ -277,12 +277,6 @@ The direct implementation saw a high miss rate in L1 and L2 caches (see figure~\
 \subsection{Reducing register spill} % (fold)
 \label{sub:reducing_register_spill}
 
-\begin{itemize}
-	\item Transpose attempt
-	\item Fail : ILP? IP-k result reuse?
-	\item Final version: 2x6 accum streams, for: ip, k, j (2k 6j streams)
-\end{itemize}
-
 The \texttt{lhs} and \texttt{rhs} kernels are expensive in computation and contribute to the majority of the execution time. This section looks at further optimisations applied to the \texttt{lhs}, with the \texttt{rhs} benefitting from the same optimisations as the kernels are very similar.
 
 The \texttt{lhs} kernel still suffers from significant local memory traffic, originating from register spilling. The causes are investigated below.
@@ -307,26 +301,32 @@ for (int ip = 0; ip<8; ip++){
 
 % subsection reducing_register_spill (end)
 
-\subsection{Final Profiling} % (fold)
-\label{sub:final_profiling}
+\subsection{Final Perfomance Remarks} % (fold)
+\label{sub:final_performance_remarks}
 
 \begin{figure}[tb]
 	\begin{center}
 		\includegraphics[width=\textwidth]{"LHS efficency and stall reason"}
 	\end{center}
-	\caption{LHS issue efficency and stall reasons}
+	\caption{\texttt{lhs} issue efficency and stall reasons. Note that average serialisation was 57\%.}
 	\label{fig:issue_eff_and_stall_reasons}
 \end{figure}
 
-\begin{itemize}
-	\item DP Structural Hazard ultimate bottleneck
-\end{itemize}
+As presented in Section~\ref{sub:introduction_to_the_gk_104}, we know that we only have eight double precision units per SMX. This ends up being the ultimate bottleneck for performance on this device.
+As we have four warp schedulers trying to schedule onto only a single double precison functional unit, we should, at least for double precision arithmetic instructions, expect a 25\% issue efficiency.
+Presented in Figure~\ref{fig:issue_eff_and_stall_reasons} is the issue efficiency and the stall reasons for the final \texttt{lhs} kernel implementation.
+We see that the category ``other'' is by far the biggest stall reason, which is contributed to by functional units being busy in a given cycle.
+This means that we are very close to the fundamental limit of double precision execution for this device.
 
-This suggests that if double precision is nessecary for the application, then perhaps the GK-104 is not the best choice. Indeed, the GK-110 has 64 double precision units per SMX, and would be a much better choice for this workload.
+The profiling tools report an instruction serialisation metric of 57\%. This is lower than the theoretical 75\% from eight double precision units across 32 threads, with the difference being accounted for by interleaving of other types of instructions.
 
-As a consequence, a small benefit is that the thermal output of the device is less than 75\% of TDP. This means that the Dynamic Voltage and Freqency Scaling (DVFS) system will clock the GPU at its maximum frequency all the time.
+An interesting consequence of this bottleneck and a small benefit is that the thermal output of the device is less than 75\% of TDP. This means that DVFS brings the GPU to its maximum frequency during the entire execution.
 
-% subsection final_profiling (end)
+Finally, both the analysis of the archtecture and profiling results suggest that if double precision is nessecary for the application, then perhaps the GK-104 GPUs are not the best choice. Indeed, the successor GK-110 has 64 double precision units per SMX, and would be a much better choice for this workload.
+
+Theoretically, double precision can be emulated through two floats, however the implementations are roughly 8 times slower than single precision and thus would not be worthwhile for this architecture due to additional register pressure. Alternatively, mixed precision approach to the algorithm could be employed if double precision is not crucial for all stages of the computation.
+
+% subsection final_performance_remarks (end)
 
 
 % section gpu_and_cuda (end)
@@ -548,6 +548,51 @@ This table needn't be longer than half a page (a page at most if you really real
 %Anandtech article (functional units division)
 %http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2
 
+<<<<<<< HEAD
+=======
+\begin{thebibliography}{9}
+
+  \bibitem{tbbr}
+  Intel,
+  \emph{Intel Threding Building Blocks}. \\
+  \url{https://www.threadingbuildingblocks.org}
+
+  \bibitem{QPC}
+  Microsoft,
+  \emph{Developer reference - QueryPerformanceCounter function}. \\
+  \url{http://msdn.microsoft.com/en-us/library/windows/desktop/ms644904(v=vs.85).aspx}
+
+	\bibitem{GK-104 Whitepaper}
+	Nvidia,
+	\emph{Whitepaper - NVIDIA GeForce GTX 680}. \\
+	\url{http://www.geforce.com/Active/en_US/en_US/pdf/GeForce-GTX-680-Whitepaper-FINAL.pdf}
+
+	\bibitem{Anand}
+	Ryan Smith,
+	\emph{The Kepler Architecture: Fermi Distilled}. \\
+	\url{http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2}
+
+	\bibitem{Progguide}
+	Nvidia,
+	\emph{Cuda-C Programming Guide}. \\
+	\url{http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html}
+
+	\bibitem{Best Practices}
+	Nvidia,
+	\emph{CUDA-C Best Practices Guide}. \\
+	\url{http://docs.nvidia.com/cuda/cuda-c-best-practices-guide/}
+
+	\bibitem{IssueStallOther}
+	Greg Smith,
+	\emph{Stack Overflow Answer}. \\
+	\url{http://stackoverflow.com/a/15259419/1128910}
+
+\end{thebibliography}
+
+\end{document}
+
+
+>>>>>>> 7839a3caed3aad8d8762c3e1a3eb301b5423b66b
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
