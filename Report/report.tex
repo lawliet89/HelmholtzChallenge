@@ -163,18 +163,18 @@ Given that the target device for final optimisation was an Nvidia GPU, with the 
 \subsection{GPU hardware} % (fold)
 \label{sub:introduction_to_the_gk_104}
 
-The target device is an Nvidia GTX 670 GPU with Kepler GK-104 architecture. The architecture is based on 6 Streaming Multiprocessors (SMX), structure of which is shown in Figure~\ref{fig:SMX}. Each SMX consists of an instruction cache, four warp schedulers with two dispatch units each, a 64k entry 32-bit register file, L1 cache and shared memory \cite{GK-104 Whitepaper}. The functional units are grouped into 15 functional unit blocks, with varying number of SIMD lanes \cite{Anand}. A breakdown of functional unit counts per SMX is shown in table~\ref{tab:funcunits}. The CUDA cores are the main functional units, which can execute a single precision floating point instruction per clock cycle. Five out of six blocks of the CUDA cores can also execute basic 32 bit integer arithmetic instructions.
+The target device is an Nvidia GTX 670 GPU with Kepler GK-104 architecture. The architecture is based on 6 Streaming Multiprocessors (SMX). Each SMX consists of an instruction cache, four warp schedulers with two dispatch units each, a 64k entry 32-bit register file, L1 cache and shared memory \cite{GK-104 Whitepaper}. The functional units are grouped into 15 functional unit blocks, with varying number of SIMD lanes \cite{Anand}. A breakdown of functional unit counts per SMX is shown in table~\ref{tab:funcunits}. The CUDA cores are the main functional units, which can execute a single precision floating point instruction per clock cycle. Five out of six blocks of the CUDA cores can also execute basic 32 bit integer arithmetic instructions.
 
 This architecture has a fundamental Single Instruction Multiple Thread (SIMT) width of 32, referred to as a warp.
 Each SMX has 4 warp shedulers, each managing up to 16 active warps. Each clock cycle, each warp sheduler selects a warp from the pool of warps ready to execute. Each warp scheduler is capable of super-scalar issue of 2 instructions per cycle from a selected warp. Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the currently executing context and no structrual hazards, the collection of warp schedulers can issue up to 8 warp-wide instructions per clock cycle.
 
-\begin{figure}[tb]
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{SMX}
-	\end{center}
-	\caption{GK-104 Streaming Multiprocessor (SMX) block diagram \cite{GK-104 Whitepaper}.}
-	\label{fig:SMX}
-\end{figure}
+% \begin{figure}[tb]
+% 	\begin{center}
+% 		\includegraphics[width=0.8\textwidth]{SMX}
+% 	\end{center}
+% 	\caption{GK-104 Streaming Multiprocessor (SMX) block diagram \cite{GK-104 Whitepaper}.}
+% 	\label{fig:SMX}
+% \end{figure}
 
 \begin{table}[tb]
 	\caption{GK-104 functional units per SMX \cite{Anand}.}
@@ -209,14 +209,14 @@ Each SMX has 4 warp shedulers, each managing up to 16 active warps. Each clock c
 \end{table}
 
 % subsection introduction_to_the_gk_104 (end)
-
+%\clearpage
 \subsection{Initial GPU implementation} % (fold)
 \label{sub:initial_implementation}
 The starting point for the GPU version was a straightforward CUDA rewrite of kernels as follows:
 
 As discussed above, the default boundary condition setting \texttt{expression 1} kernel was inefficiently iterating over cells to initalise the node array, overwriting adjacent cells' results and therefore doing a factor of roughly 36 redundant work for the given small mesh. The CUDA kernel version iterates directly over the array (each iteration packed into a separate thread). It is worth noting that the boundary code uses cosines, which are accelerated in hardware on the GPU and thus are significantly faster.
 
-The \texttt{zero} kernel was turned into a cudaMemset, executing in a millisecond.
+The \texttt{zero} kernel was turned into a \texttt{cudaMemset}, executing in a millisecond.
 
 The \texttt{expression 2} kernel was observed to be doing a trivial direct copy operation, which is removed by simply passing the original buffer pointer to the next kernel.
 
@@ -247,20 +247,8 @@ The straightforward CUDA implementation performed the same computation in 5.68 s
 	\label{fig:membBWfinal}
 \end{figure}
 
-<<<<<<< HEAD
-Profiling the initial imoplementation we see that the memory bandwith to local memory is very high, and that the L1 and L2 cache hits are very low, and therefore we have a lot of local memory transactions to off-chip memory. This is shown in Figure~\ref{fig:membBWorig}.
-Checking the disassembly, we see that the large constant matricies used in the computation is pushed onto the stack, which is stored in local memory.
-Even though these matricies are constant across all threads in the kernel, they each have a destinct stack, and therefore the L1 and L2 cache will not properly cache the access to these matricies.
-Therefore, as these matricies are then accessed in the hot loop of the kernels, prompts several fetches from off-chip memory for every iteration. This makes for very poor performance.
+The direct implementation saw a high miss rate in L1 and L2 caches (see figure~\ref{fig:membBWorig}), with each miss having to go to off-chip memory which was detrimental to performance. This is a consequence of storing the constant factor matrices on the local stack. Since these factors are constant across all cells for a given kernel, the obvious optimisation is to push this data into constant memory, since it ``can be as fast as a register''\cite{Best Practices} if all threads access the same location. Furthermore, there is an additional benefit as the GK-104 architecture has a separate constant memory cache per SMX that is big enough to cache all constant matrices.. The effects of this optimisation on \texttt{lhs} and total execution time can be seen in table~\ref{tab:constMemExeTime}. Figure~\ref{fig:membBWfinal} shows the cache hit rates and memory bandwidth for the optimised version.
 
-The GK-104 offeres a special constant-memory cache which is destinct from the L1 and L2 cache. This cache will only store variables which are declared in global scope and with the \verb.__constant__. qualifier.
-As the constant matricies will now share the same address for all the threads, the constant cache will fit all of the matricies.
-In fact, ``If all threads access the same location then constant memory can be as fast as a register'' \cite{Best Practices}.
-This is indeed the case for our kernels, so we should see a decent speedup.
-The speedup obtained is shown in Table~\ref{tab:constMemExeTime}.
-=======
-The direct implementation saw a high miss rate in L1 and L2 caches (see figure~\ref{fig:membBWorig}), with each miss having to go to off-chip memory which was detrimental to performance. This is a consequence of storing the constant factor matrices on the local stack. Since these factors are constant across all cells for a given kernel, the obvious optimisation is to push this data into constant memory. Furthermore, there is an additional benefit as the GK-104 architecture has a separate constant memory cache per SMX. The effects of this optimisation on \texttt{lhs} and total execution time can be seen in table~\ref{tab:constMemExeTime}. Figure~\ref{fig:membBWfinal} shows the cache hit rates and memory bandwidth for the optimised version.
->>>>>>> 808ef7aab34de01a1e3ce1382dda8e16e912ca68
 
 \begin{table}[tb]
 	\caption{Comparison of execution times for constant memory optimisation on small mesh.}
@@ -295,25 +283,17 @@ The direct implementation saw a high miss rate in L1 and L2 caches (see figure~\
 	\item Final version: 2x6 accum streams, for: ip, k, j (2k 6j streams)
 \end{itemize}
 
-The LHS and RHS kernels take up the vast majority of the total execution time.
-The rest of this document will focus on the LHS kernel, as this is the one that takes the longest time.
-Howver many of the optimisations applied to the LHS kernel apply directly to the RHS kernel, as they are very similar in structure.
+The \texttt{lhs} and \texttt{rhs} kernels are expensive in computation and contribute to the majority of the execution time. This section looks at further optimisations applied to the \texttt{lhs}, with the \texttt{rhs} benefitting from the same optimisations as the kernels are very similar.
 
-For the LHS kernel, we still see register spilling to local memory even after the aformentioned constant memory optimisation.
-The GK-104 has a maximum register allocation of 63 32-bit registers per thread \cite{progguide}.
-During the hot loop of the kernel, the original implementation accumulates the result of the main expression to 36 destinct accumulators.
-This is later sum-reduced to 6 accumulators, which are then atomically written back using a sum reduction to the nodes stored in global memory.
-As the compiler cannot assume that addition is commutative for floating point implementation reasons, it cannot do the 36 to 6 reduction early. Therefore we are forced to store all of the 36 accumulators. As we use double precision, this would require 72 32-bit registers.
-We are only allowed 63, so this will spill the accumulators to local memory.
+The \texttt{lhs} kernel still suffers from significant local memory traffic, originating from register spilling. The causes are investigated below.
 
-A straightforward optimisation is to rewrite the code to only use the 6 required accumulators. After compilation we see that this reduces the number of registers used to 58, and produces exactly zero local memory usage.
-Interestingly, reducing the number of accumulators to 6 is slower than the original implementation.
+During the hot loop of the kernel, the original implementation accumulates the result of the main expression to 36 distinct accumulators.
+This is later summed to 6 accumulators, which are then atomically added to the nodes stored in global memory.
+As the compiler cannot treat floating point addition as associative, it cannot do the 36 to 6 reduction early. Therefore the state of all 36 accumulators is retained throughout the loop. As we use double precision, this would require 72 32-bit registers, while the GK-104 has a maximum register allocation of 63 32-bit registers per thread \cite{Progguide}.
 
-After experimenting with the number of accumulators and interchange of the \verb.ip j k. loops, we found the structure shown in Listing~\ref{lst:lhsloop} to be optimal.
-This structure uses 12 accumulators, and spreads out the distance between accesses to the same accumulator as much as possible.
-Checking the disassembly, the compiler will unroll all three levels of this loop.
-A good guess for why the presented structure is optimal is that the compiler will interleave ajacent iterations of the loop if they are independent.
-Apparantly an independence distance of 6 iterations is not enough, but 12 is sufficient to provide no stalls due to dependencies.
+A straightforward optimisation attempted was to rewrite the code to only use the 6 required accumulators, reducing the number of registers used to 58, and producing exactly zero local memory usage. However, the performance is lower than than the original implementation that spills registers.
+
+After experimenting with the number of accumulators and interchange of the \verb.ip j k. loops, we found the structure shown in listing~\ref{lst:lhsloop} to be optimal. This structure uses 12 accumulators, and spreads out the distance between accesses to the same accumulator as much as possible. Checking the disassembly, the compiler unrolls all three levels of this loop. A good guess for why the presented structure is optimal is that the compiler will interleave ajacent iterations of the loop if they are independent. Apparently an independence distance of 6 iterations is not enough, but 12 is sufficient to remove dependency stalls.
 
 \begin{lstlisting}[frame=, language=C++, label=lst:lhsloop, caption=LHS kernel main loop]
 for (int ip = 0; ip<8; ip++){
@@ -456,9 +436,45 @@ nvcc.exe -gencode=arch=compute_30,code=\"sm_30,compute_30\" --use-local-env
          -DWIN64 -DNDEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /O2 /Zi /MD"
 \end{verbatim}
 
-
-
 \end{appendices}
+\clearpage
+
+\begin{thebibliography}{9}
+
+  \bibitem{tbbr}
+  Intel,
+  \emph{Intel Threding Building Blocks}. \\
+  \url{https://www.threadingbuildingblocks.org}
+
+  \bibitem{QPC}
+  Microsoft,
+  \emph{Developer reference - QueryPerformanceCounter function}. \\
+  \url{http://msdn.microsoft.com/en-us/library/windows/desktop/ms644904(v=vs.85).aspx}
+
+	\bibitem{GK-104 Whitepaper}
+	Nvidia,
+	\emph{Whitepaper - NVIDIA GeForce GTX 680}. \\
+	\url{http://www.geforce.com/Active/en_US/en_US/pdf/GeForce-GTX-680-Whitepaper-FINAL.pdf}
+
+	\bibitem{Anand}
+	Ryan Smith,
+	\emph{The Kepler Architecture: Fermi Distilled}. \\
+	\url{http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2}
+
+	\bibitem{Progguide}
+	Nvidia,
+	\emph{Cuda-C Programming Guide}. \\
+	\url{http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html}
+
+	\bibitem{Best Practices}
+	Nvidia,
+	\emph{CUDA-C Best Practices Guide}. \\
+	\url{http://docs.nvidia.com/cuda/cuda-c-best-practices-guide/}
+
+\end{thebibliography}
+
+\end{document}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -521,7 +537,7 @@ This table needn't be longer than half a page (a page at most if you really real
 
 % section report_notes_on_deliverables (end)
 
-\clearpage
+
 
 %INstruction throughput table
 %http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#arithmetic-instructions__throughput-native-arithmetic-instructions
@@ -531,43 +547,6 @@ This table needn't be longer than half a page (a page at most if you really real
 
 %Anandtech article (functional units division)
 %http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2
-
-\begin{thebibliography}{9}
-
-  \bibitem{tbbr}
-  Intel,
-  \emph{Intel Threding Building Blocks}. \\
-  \url{https://www.threadingbuildingblocks.org}
-
-  \bibitem{QPC}
-  Microsoft,
-  \emph{Developer reference - QueryPerformanceCounter function}. \\
-  \url{http://msdn.microsoft.com/en-us/library/windows/desktop/ms644904(v=vs.85).aspx}
-
-	\bibitem{GK-104 Whitepaper}
-	Nvidia,
-	\emph{Whitepaper - NVIDIA GeForce GTX 680}. \\
-	\url{http://www.geforce.com/Active/en_US/en_US/pdf/GeForce-GTX-680-Whitepaper-FINAL.pdf}
-
-	\bibitem{Anand}
-	Ryan Smith,
-	\emph{The Kepler Architecture: Fermi Distilled}. \\
-	\url{http://www.anandtech.com/show/5699/nvidia-geforce-gtx-680-review/2}
-
-	\bibitem{Progguide}
-	Nvidia,
-	\emph{Cuda-C Programming Guide}. \\
-	\url{http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html}
-
-	\bibitem{Best Practices}
-	Nvidia,
-	\emph{CUDA-C Best Practices Guide}. \\
-	\url{http://docs.nvidia.com/cuda/cuda-c-best-practices-guide/}
-
-\end{thebibliography}
-
-\end{document}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
