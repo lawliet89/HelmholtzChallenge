@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AnalysisReport Version="1.0">
+  <ProcessId>7912</ProcessId>
+  <ReportCreationTime>2014-03-13T02:05:25.3107151+00:00</ReportCreationTime>
+  <ReportDirectory>c:\temp\HelmholtzChallenge140313_009\HelmholtzChallenge140313_009_Capture_000</ReportDirectory>
+  <ReportFile>c:\temp\HelmholtzChallenge140313_009\HelmholtzChallenge140313_009_Capture_000\HelmholtzChallenge140313_009_Capture_000.nvreport</ReportFile>
+  <CaptureStartQpcTimestamp>267181699517</CaptureStartQpcTimestamp>
+  <CaptureStartNveTimestamp>149887850086919</CaptureStartNveTimestamp>
+  <CaptureStartNveFrequency>3510000000</CaptureStartNveFrequency>
+  <CaptureEndQpcTimestamp>267197094666</CaptureEndQpcTimestamp>
+  <CaptureEndNveTimestamp>149903614723805</CaptureEndNveTimestamp>
+  <CaptureStartRdtscTimestamp>149887850087083</CaptureStartRdtscTimestamp>
+  <CaptureEndRdtscTimestamp>149903614726182</CaptureEndRdtscTimestamp>
+  <CaptureStartFileTimeTimestamp>130391499254137210</CaptureStartFileTimeTimestamp>
+  <CaptureEndFileTimeTimestamp>130391499299039778</CaptureEndFileTimeTimestamp>
+</AnalysisReport>

@@ -179,7 +179,6 @@ int main (int argc, char *argv[])
 	wrap_zero_1(0, nodes * LAYERS,
 		expr5,
 		LAYERS);
-	startTimer(&StartingTime);
 	wrap_lhs(0, cells,
 		expr5, map_3D, map_3D,
 		coords_3D, map_3D,
@@ -225,6 +224,9 @@ int main (int argc, char *argv[])
 	// Memset is very fast (milliseconds). Buffer1 inital contents generated on device
 	if(e = cudaMemset(buffer2, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
 	if(e = cudaMemset(buffer3, 0, expr_size)) printf("Cuda error %d on line %d\n", e, __LINE__);
+
+	// set to max L1 cache and minimum shared memory
+	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 
 	// Evaluating Expression
 #ifdef TIME_INDIVIDUAL
@@ -338,5 +340,5 @@ int main (int argc, char *argv[])
 	free(expr5);
 #endif // CHECK_VS_CPU
 
-	return 0;
+ 	return 0;
 }
