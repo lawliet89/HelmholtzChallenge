@@ -149,10 +149,11 @@ The GTX 670 has 6 SMX on the chip.
 As can be seen in the GK-104 SMX shown in Figure~\ref{fig:SMX}, each SMX consists of an instruction cache, four warp schedulers with two dispatch units each, a 64k entry 32-bit register file, many functional units, L1 cache and shared memory.
 The functional units are grouped into 15 functional unit blocks, with varying number of SIMD lanes \cite{Anand}. These blocks are shown in Table~\ref{tab:funcunits}.
 
-This architecture has a fundamental SIMT width of 32. Nvidia calls a set of 32 SIMT threads a ``warp''.
+This architecture has a fundamental Single Instruction Multiple Threads (SIMT) width of 32. Nvidia calls a set of 32 SIMT threads a ``warp''.
 Each SMX has 4 warp shedulers, each managing up to 16 active warps. Each clock cycle, each of the warp shedulers will select one warp from their pool which is ready to run.
 Each warp scheduler is capable of super-scalar issue of 2 instructions per cycle from a selected warp.
 Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the currently executing context, and no structrual hazards, the collection of warp schedulers can issue up to 8 instructions per clock cycle.
+These instructions apply to the entire warp in a SIMT manner.
 
 \begin{figure}[tb]
 	\begin{center}
@@ -199,6 +200,15 @@ Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the cur
 \subsection{Initial Implementation} % (fold)
 \label{sub:initial_implementation}
 
+\begin{itemize}
+	\item for each node
+	\item zeroing memory
+	\item atomics
+	\item iteration space alignment (column major) memory coalesing
+	\item correctness (check vs CPU)
+	\item 
+\end{itemize}
+
 % subsection initial_implementation (end)
 
 \subsection{Constant Memory Optimisation} % (fold)
@@ -208,14 +218,38 @@ Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the cur
 	\begin{center}
 		\includegraphics[width=\textwidth]{"Original nonconst LHS memory overview BW"}
 	\end{center}
-	\caption{Memory bandwidth overview of original Implementation}
+	\caption{Memory bandwidth overview of original implementation}
 	\label{fig:membBWorig}
 \end{figure}
+
+\begin{table}[tb]
+	\caption{Comparison of execution times for constant memory optimisation}
+	\label{tab:constMemExeTime}
+	\begin{center}
+		\begin{tabular}{l|cc}
+		\hline
+
+		\hline
+		\textbf{column 1} & \textbf{column 2} & \textbf{column 3} \\
+		\hline
+			 & & \\
+		\hline
+
+		\hline
+		\end{tabular}
+	\end{center}
+\end{table}
 
 % subsection constant_memory_optimisation (end)
 
 \subsection{Reducing register spill} % (fold)
 \label{sub:reducing_register_spill}
+
+\begin{itemize}
+	\item Transpose attempt
+	\item Fail : ILP? IP-k result reuse?
+	\item Final version: 2x6 accum streams, for: ip, k, j (2k 6j streams)
+\end{itemize}
 
 % subsection reducing_register_spill (end)
 
@@ -229,6 +263,10 @@ Therefore, if there is sufficient Instruction Level Parallelism (ILP) in the cur
 	\caption{LHS issue efficency and stall reasons}
 	\label{fig:issue_eff_and_stall_reasons}
 \end{figure}
+
+\begin{itemize}
+	\item DP Structural Hazard ultimate bottleneck
+\end{itemize}
 
 This suggests that if double precision is nessecary for the application, then perhaps the GK-104 is not the best choice. Indeed, the GK-110 has 64 double precision units per SMX, and would be a much better choice for this workload.
 
@@ -307,7 +345,7 @@ Display adapter 0
   Vendor ID   0x10DE (0x3842)
   Model ID    0x1189 (0x2678)
   Performance Level 0
-    Core clock  1006.0 MHz
+    Core clock  1175.0 MHz
     Memory clock  3105.0 MHz
 
 Win32_VideoController   AdapterRAM = 0x80000000 (2147483648)
