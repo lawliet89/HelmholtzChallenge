@@ -82,8 +82,6 @@ The initial parallelisation of the code was done on the CPU using Intel Threadin
 
 The TBB version of the FEM code was written to ensure that the chosen parallelisations are correct and in general was very straightforward, essentially replacing \texttt{for} loops with \texttt{parallel\_for} constructs.
 
-TODO: include runtimes with tbb-cell and tbb-column.
-
 % subsection initial_look_at_parallelisation (end)
 
 \subsection{Timing code changes} % (fold)
@@ -231,7 +229,7 @@ The straightforward CUDA implementation performed the same computation in 5.68 s
 \subsection{Constant memory optimisation} % (fold)
 \label{sub:constant_memory_optimisation}
 
-\begin{figure}[tb]
+\begin{figure}[p]
 	\begin{center}
 		\includegraphics[width=\textwidth]{"Original nonconst LHS memory overview BW"}
 	\end{center}
@@ -239,7 +237,7 @@ The straightforward CUDA implementation performed the same computation in 5.68 s
 	\label{fig:membBWorig}
 \end{figure}
 
-\begin{figure}[tb]
+\begin{figure}[p]
 	\begin{center}
 		\includegraphics[width=\textwidth]{"LHS memory overview BW"}
 	\end{center}
@@ -289,6 +287,8 @@ A straightforward optimisation attempted was to rewrite the code to only use the
 
 After experimenting with the number of accumulators and interchange of the \verb.ip j k. loops, we found the structure shown in listing~\ref{lst:lhsloop} to be optimal. This structure uses 12 accumulators, and spreads out the distance between accesses to the same accumulator as much as possible. Checking the disassembly, the compiler unrolls all three levels of this loop. A good guess for why the presented structure is optimal is that the compiler will interleave ajacent iterations of the loop if they are independent. Apparently an independence distance of 6 iterations is not enough, but 12 is sufficient to remove dependency stalls.
 
+The execution time improvements are presented in table~\ref{tab:exetimes}.
+
 \begin{lstlisting}[frame=, language=C++, label=lst:lhsloop, caption=LHS kernel main loop]
 for (int ip = 0; ip<8; ip++){
 	for (int k = 0; k<6; k++){
@@ -312,11 +312,34 @@ for (int ip = 0; ip<8; ip++){
 	\label{fig:issue_eff_and_stall_reasons}
 \end{figure}
 
+
+\begin{table}[tb]
+	\caption{Execution times before and after optimisations}
+	\label{tab:exetimes}
+	\begin{center}
+		\begin{tabular}{l|cc}
+		\hline
+
+		\hline
+		\textbf{Kernel} & \textbf{Before} & \textbf{After} \\
+		\hline
+			expr\_1 & 27ms & 26ms \\
+			rhs\_1 & 158ms & 158ms \\
+			rhs & 2.29s & 714ms \\
+			lhs & 3.10s & 980ms \\
+		\hline
+
+		\hline
+		\end{tabular}
+	\end{center}
+\end{table}
+
 As presented in Section~\ref{sub:introduction_to_the_gk_104}, we know that we only have eight double precision units per SMX. This ends up being the ultimate bottleneck for performance on this device.
 As we have four warp schedulers trying to schedule onto only a single double precison functional unit, we should, at least for double precision arithmetic instructions, expect a 25\% issue efficiency.
 Presented in Figure~\ref{fig:issue_eff_and_stall_reasons} is the issue efficiency and the stall reasons for the final \texttt{lhs} kernel implementation.
 We see that the category ``other'' is by far the biggest stall reason, which is contributed to by functional units being busy in a given cycle.
 This means that we are very close to the fundamental limit of double precision execution for this device.
+
 
 The profiling tools report an instruction serialisation metric of 57\%. This is lower than the theoretical 75\% from eight double precision units across 32 threads, with the difference being accounted for by interleaving of other types of instructions.
 
@@ -325,6 +348,8 @@ An interesting consequence of this bottleneck and a small benefit is that the th
 Finally, both the analysis of the archtecture and profiling results suggest that if double precision is nessecary for the application, then perhaps the GK-104 GPUs are not the best choice. Indeed, the successor GK-110 has 64 double precision units per SMX, and would be a much better choice for this workload.
 
 Theoretically, double precision can be emulated through two floats, however the implementations are roughly 8 times slower than single precision and thus would not be worthwhile for this architecture due to additional register pressure. Alternatively, mixed precision approach to the algorithm could be employed if double precision is not crucial for all stages of the computation.
+
+The final execution time for the total computation on the GPU is on average 2.28s, a 97\% speedup over the initial code on the CPU.
 
 % subsection final_performance_remarks (end)
 
@@ -588,75 +613,5 @@ This table needn't be longer than half a page (a page at most if you really real
 	\url{http://stackoverflow.com/a/15259419/1128910}
 
 \end{thebibliography}
-
-\end{document}
-
-
->>>>>>> 7839a3caed3aad8d8762c3e1a3eb301b5423b66b
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-data parallel
-tons of independent work
-fp calculations
-
-
-accel of cos-field through hw
-
-const mem
-
-
-register spilling in base cuda implementation
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-so: to write about in report (if you want to still focus on that): interchange does free up registers, reduces register spilling to the point of 0 if you do both i and j outside. However, most likely the compiler is hiding the serial latency of the massive serial sum of products statement using the iterations over i and j.
-therefore, returning to the same accumulator quickly, you lose performance
-
-
-[21:29:03] madcowswe: what is really interesting to write about is the ability for the compiler to do interleaving of different iterations to hide the latency (:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\section{General Approach}
-
-The general approach taken to speed up the execution of the calculation is to exploit the parallelism inherent in the problem itself. In particular, by studying the source code, we can see that for each of the wrapper function calls, the cells calculations are mostly independent of each other. The cell calculations can therefore be made to run in parallel. Due to unstructured nature of the mesh, calculations over the entire space must be complete before the next call to the next wrapper function can be made.
-
-In each of the cell, calculation is written to a buffer in which each element of the buffer corresponds to one vertex in the mesh. Since a vertex can belong to more than one cell, care must be taken to ensure that the values accumulated in each vertex is done so without any race conditions such as an atomic add.
-
-The unstructured nature of the mesh also means that trying to exploit spatial locality might be difficult. It will also be difficult to divide the entire iteration space into independent blocks because the memory locations are not ``adjacent'' to each other. 
-
-\section{Threading}
-
-The first approach to speeding up the calculation was to use threads to exploit the parallelism inherent in the problem. Using the Threading Building Blocks library\footnote{https://www.threadingbuildingblocks.org/}, the iteration space was made into what is essentially a parallel for loop that the library can schedule to run in parallel using threads depending on the hardware available. 
-
-There are two avenues for parallerise the work being done: over each ``column'' of cells or over each cell individually.  We hypothesise that while both variants of threading will bring about performance improvements to the computation over the original serialised version, the former parallel version is expected to work better than the latter. This is because the work done per cell might be too small compared to the overheads of thread scheduling and context switching. 
-
-The results shown in table \ref{table:threads} confirms our hypothesis. We notice that threading by columns gives the largest amount of speed up over the original version, by approximately a factor of four. For threading by cell, the performance for most operations are improved significantly, though not as much as threading by columns. Finally, interpolating expressions became slower in this version because of the overheads in thread scheduling when each thread does too little work.
-
-\section{CUDA Acceleration}
-
-
-
-
-\section{Summary Table}
-\subsection{Threading Performance}
-Testing was done on a laptop with Intel Core i7-4700MQ with 4 cores running on Linux 13.10. The programs were compiled with GCC with optimisation set to level 3. The results are summarised in the table below, and the times are consistent across several runs with very minor variations. The times for the steps ``Set array to zero'' and ``Evaluating expression'' are not reported because they are trivial cases that has been optimised by the compiler. The timings were generated from the large mesh.
-
-\begin{table}[h]
-\begin{tabularx}{1.2\textwidth}{ |X|X|X|X|X| }
-\cline{2-5}
-                                          & Evaluating Exp & Interpolating Exp & Assembling RHS & Assembling LHS \\ \hline
-\multicolumn{1}{|l|}{Original Version}    & 40.0307        & 4.86542           & 21.0748        & 37.747         \\ \hline
-\multicolumn{1}{|l|}{Threading by Cell}   & 12.993         & 5.59316           & 11.0813        & 14.9041        \\ \hline
-\multicolumn{1}{|l|}{Threading by Column} & 7.77536        & 1.19127           & 5.64956        & 9.59484        \\ \hline
-\end{tabularx}
-
-\caption{Timings in seconds for threaded version using the large data mesh.}
-\label{table:threads}
-\end{table}
-\subsection{CUDA Performance}
 
 \end{document}
